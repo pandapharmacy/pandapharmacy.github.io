@@ -486,7 +486,7 @@ function renderOrders(){
           <option value="ALL" ${A.fStatus === 'ALL' ? 'selected' : ''}>全部（含已取消）</option>
         </select>
         <select id="fp"><option value="">全部取貨點</option>${A.settings.pickups.map(p => `<option ${A.fPick === p.name ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
-        <input type="search" id="fq" placeholder="搜尋訂單編號、姓名、LINE/微信、商品" value="${esc(A.fQ)}">
+        <input type="search" id="fq" placeholder="搜尋訂單編號、姓名、LINE、商品" value="${esc(A.fQ)}">
         <button class="btn ghost sm" id="rf">重新整理</button>
       </div>
     </div>

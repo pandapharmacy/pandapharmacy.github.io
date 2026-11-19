@@ -82,7 +82,8 @@ alter table public.order_seq enable row level security;
 insert into public.settings (id, data) values (1, '{
   "shopName": "熊貓藥局 Panda Pharmacy｜臺灣客人專屬訂購網頁",
   "pickups": [{"name": "明洞", "addr": ""}, {"name": "聖水", "addr": ""}],
-  "coupons": [{"code": "coolbau", "rate": 0.05}],
+  "coupons": [{"code": "coolbau", "rate": 0.05}, {"code": "taiwanlove", "rate": 0.05}],
+  "autoCoupon": "taiwanlove",
   "specialCategories": ["熱門活動商品", "熊貓明星賞品", "台灣人的最愛"],
   "functionCategories": ["抗痘", "保濕", "修護", "美白淡斑", "防曬", "腸胃保健", "止痛退燒", "感冒喉嚨", "眼睛保養", "營養補充", "抗老化"],
   "refundTable": [[30000,1500],[50000,3500],[75000,5000],[100000,6500],[125000,8000],[150000,9500],[175000,11000],[200000,12500],[225000,14000],[250000,16000],[275000,17000],[300000,19000],[325000,21000],[350000,23000],[375000,25000]],

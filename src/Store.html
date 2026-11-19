@@ -49,7 +49,16 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 110px}
 .card .im .tags{position:absolute;left:6px;top:6px;display:flex;flex-direction:column;gap:3px;align-items:flex-start}
 .tag{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:6px;background:var(--red);color:#fff}
 .tag.panda{background:#222}
-.tag.tw{background:var(--gold)}
+.tag.tw{background:linear-gradient(135deg,#ffb300,#ffd23f 50%,#ff9800);color:#5a3200;text-shadow:0 1px 0 rgba(255,255,255,.5);box-shadow:0 1px 4px rgba(255,152,0,.45)}
+.shine{position:relative;overflow:hidden;isolation:isolate}
+.shine::after{content:"";position:absolute;top:-20%;bottom:-20%;left:0;width:45%;pointer-events:none;z-index:1;
+  background:linear-gradient(105deg,transparent 0%,rgba(255,255,255,0) 20%,rgba(255,255,255,.85) 50%,rgba(255,255,255,0) 80%,transparent 100%);
+  transform:translateX(-160%) skewX(-18deg);animation:shine 2.6s ease-in-out infinite}
+@keyframes shine{0%{transform:translateX(-160%) skewX(-18deg)}55%,100%{transform:translateX(330%) skewX(-18deg)}}
+.chip.tw{background:linear-gradient(135deg,#ffb300,#ffd23f 50%,#ff9800);border-color:#ffb300;color:#5a3200;font-weight:700}
+.chip.tw.on{background:linear-gradient(135deg,#ff8f00,#ffc400 50%,#ff6f00);border-color:#ff8f00;color:#fff}
+.sec-h h2.tw{display:inline-block;padding:2px 12px;border-radius:10px;background:linear-gradient(135deg,#ffb300,#ffd23f 50%,#ff9800);color:#5a3200}
+@media (prefers-reduced-motion:reduce){.shine::after{animation:none;display:none}}
 .card .tx{padding:9px 10px 10px;display:flex;flex-direction:column;flex:1}
 .card .br{font-size:11.5px;color:var(--ink3)}
 .card .nm{font-size:14px;font-weight:700;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:1px 0 6px}
@@ -158,6 +167,11 @@ const store = {
     S.products.forEach(p => S.byId[p.id] = p);
     Object.keys(S.cart).forEach(id => { if(!S.byId[id]) delete S.cart[id]; });
     renderChips(); render(); renderCartBar();
+    // 網站優惠碼自動套用（後台設定 autoCoupon；客人自己移除過就不再自動帶入）
+    const ac = String(S.settings.autoCoupon || '').trim();
+    if (ac && !S.coupon && !store.get('cb_cp_off', false)){
+      try{ S.coupon = await api('api_checkCoupon', ac); store.set('cb_coupon', S.coupon); renderCartBar(); }catch(e){}
+    }
   }catch(e){
     $('#main').innerHTML = `<div class="empty">讀取失敗：${esc(e.message)}<br><br><button class="btn" onclick="location.reload()">重新整理</button></div>`;
   }
@@ -175,7 +189,7 @@ function renderChips(){
   const sp = S.settings.specialCategories;
   const cats = ['全部', ...allCats()].filter(c => c === '全部' || S.products.some(p => p.cats.includes(c)));
   $('#chips').innerHTML = cats.map(c =>
-    `<button class="chip ${sp.includes(c) ? 'sp' : ''} ${S.cat === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+    `<button class="chip ${sp.includes(c) ? 'sp' : ''} ${c === sp[2] ? 'tw shine' : ''} ${S.cat === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
 }
 $('#chips').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if(!b) return;
@@ -196,7 +210,7 @@ function cardHTML(p){
   return `
   <div class="card" data-id="${p.id}">
     <div class="im" data-open="${p.id}" style="${p.img ? `background-image:url('${esc(p.img)}')` : ''}">
-      <div class="tags">${tags.map(t => `<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>
+      <div class="tags">${tags.map(t => `<span class="tag ${tagClass(t)}${tagClass(t) === 'tw' ? ' shine' : ''}">${esc(t)}</span>`).join('')}</div>
     </div>
     <div class="tx">
       ${p.brand ? `<div class="br">${esc(p.brand)}</div>` : ''}
@@ -232,7 +246,7 @@ function render(){
   }
   if (S.cat !== '全部'){
     const res = list.filter(p => p.cats.includes(S.cat));
-    main.innerHTML = `<div class="sec-h"><h2>${esc(S.cat)}</h2><span class="muted">${res.length} 項</span></div>
+    main.innerHTML = `<div class="sec-h"><h2 class="${tagClass(S.cat) === 'tw' ? 'tw shine' : ''}">${esc(S.cat)}</h2><span class="muted">${res.length} 項</span></div>
       ${res.length ? `<div class="grid">${res.map(cardHTML).join('')}</div>` : `<div class="empty">這個分類還沒有商品</div>`}`;
     return;
   }
@@ -240,7 +254,7 @@ function render(){
   S.settings.specialCategories.forEach(c => {
     const res = list.filter(p => p.cats.includes(c));
     if (!res.length) return;
-    html += `<div class="sec-h"><h2>${esc(c)}</h2><button data-goto="${esc(c)}">全部 ${res.length} ›</button></div>
+    html += `<div class="sec-h"><h2 class="${tagClass(c) === 'tw' ? 'tw shine' : ''}">${esc(c)}</h2><button data-goto="${esc(c)}">全部 ${res.length} ›</button></div>
              <div class="row">${res.map(cardHTML).join('')}</div>`;
   });
   html += `<div class="sec-h"><h2>所有商品</h2><span class="muted">${list.length} 項</span></div>
@@ -359,8 +373,6 @@ function openAuth(after, tab){
   openPanel('auth', '會員', `
     <div class="tabs2"><button data-t="login" class="${!reg ? 'on' : ''}">登入</button><button data-t="reg" class="${reg ? 'on' : ''}">註冊</button></div>
     ${after ? `<div class="hint" style="margin:0 0 14px">產出訂購單前請先登入，之後可以在「我的訂單」隨時查看</div>` : ''}
-    <div class="field"><span>聯繫方式 <b class="req">*</b></span></div>
-    <div class="seg">${['LINE', '微信'].map(m => `<button data-m="${m}" class="${authMethod === m ? 'on' : ''}">${m}</button>`).join('')}</div>
     <label class="field"><span id="aCidLbl">${authMethod} ID <b class="req">*</b></span><input id="aCid" autocomplete="username" autocapitalize="off" placeholder="${authMethod === 'LINE' ? 'LINE ID（沒有設定 ID 可填手機號碼）' : '你的微信號'}"></label>
     ${reg ? `<label class="field"><span>護照英文姓名 <b class="req">*</b></span><input id="aName" class="upper" autocomplete="name" autocapitalize="characters" placeholder="例：WANG XIAO MING"></label>` : ''}
     <label class="field"><span>密碼${reg ? '（至少 6 碼）' : ''} <b class="req">*</b></span><input id="aPw" type="password" autocomplete="${reg ? 'new-password' : 'current-password'}"></label>
@@ -405,12 +417,12 @@ function couponHTML(){
 }
 function bindCoupon(){
   const refresh = () => { $('#cpBox').innerHTML = couponHTML(); $('#ckTot').innerHTML = totalsHTML(cartSubtotal()); bindCoupon(); renderCartBar(); };
-  if ($('#cpDel')) $('#cpDel').onclick = () => { S.coupon = null; store.del('cb_coupon'); refresh(); };
+  if ($('#cpDel')) $('#cpDel').onclick = () => { S.coupon = null; store.del('cb_coupon'); store.set('cb_cp_off', true); refresh(); };
   if ($('#cpGo')){
     const go = async () => {
       const code = $('#cpIn').value.trim(); if (!code) return;
       $('#cpGo').disabled = true; $('#cpErr').textContent = '';
-      try{ S.coupon = await api('api_checkCoupon', code); store.set('cb_coupon', S.coupon); toast('優惠碼已套用'); refresh(); }
+      try{ S.coupon = await api('api_checkCoupon', code); store.set('cb_coupon', S.coupon); store.del('cb_cp_off'); toast('優惠碼已套用'); refresh(); }
       catch(e){ $('#cpErr').textContent = e.message; $('#cpGo').disabled = false; }
     };
     $('#cpGo').onclick = go;
@@ -422,14 +434,12 @@ let ckMethod = 'LINE';
 function startCheckout(){
   if (!S.me) return openAuth(startCheckout);
   const s = S.settings;
-  ckMethod = S.me.method || ckMethod;
+  ckMethod = 'LINE';
   openPanel('checkout', '產出訂購單', `
     <div class="field"><span>取貨地點 <b class="req">*</b></span></div>
     <div class="picks">${s.pickups.map(p => `<button class="pickopt ${pickSel === p.name ? 'on' : ''}" data-pick="${esc(p.name)}"><b>${esc(p.name)}</b><small>${esc(p.addr || '韓國藥局現場取貨結帳')}</small></button>`).join('')}</div>
     <label class="field"><span>預計取貨日（韓國時間）<b class="req">*</b></span><input id="cDate" type="date" min="${seoulToday()}"></label>
     <label class="field"><span>護照英文姓名 <b class="req">*</b>（取貨時核對護照）</span><input id="cName" class="upper" value="${esc(S.me.name)}" autocapitalize="characters" placeholder="例：WANG XIAO MING"></label>
-    <div class="field"><span>聯繫方式 <b class="req">*</b></span></div>
-    <div class="seg">${['LINE', '微信'].map(m => `<button data-cm="${m}" class="${ckMethod === m ? 'on' : ''}">${m}</button>`).join('')}</div>
     <label class="field"><span id="cCidLbl">${ckMethod} ID <b class="req">*</b></span><input id="cCid" value="${esc(S.me.cid || '')}" autocapitalize="off" placeholder="${ckMethod === 'LINE' ? 'LINE ID（沒有設定 ID 可填手機號碼）' : '微信號'}"></label>
     <div class="field"><span>優惠碼</span><div id="cpBox">${couponHTML()}</div></div>
     <label class="field"><span>備註（選填）</span><textarea id="cNote" maxlength="300" placeholder="例：預計下午 3 點到"></textarea></label>
