@@ -406,6 +406,11 @@ function openAuth(after, tab){
 
 function logout(){
   S.token = null; S.me = null; S.orders = null; store.del('cb_token'); renderMe(); closePanel(); toast('已登出');
+  // 登出時清掉手動輸入的優惠碼，回到網站預設優惠
+  S.coupon = null; store.del('cb_coupon'); store.del('cb_cp_off');
+  const ac = String((S.settings && S.settings.autoCoupon) || '').trim();
+  if (ac) api('api_checkCoupon', ac).then(c => { S.coupon = c; store.set('cb_coupon', c); renderCartBar(); }).catch(() => renderCartBar());
+  else renderCartBar();
 }
 
 // ---------- 結帳 ----------
