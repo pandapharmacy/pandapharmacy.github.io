@@ -295,35 +295,18 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 110px}
 .card .im .tags{position:absolute;left:6px;top:6px;display:flex;flex-direction:column;gap:3px;align-items:flex-start}
 .tag{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:6px;background:var(--red);color:#fff}
 .tag.tw{background:linear-gradient(135deg,#ffb300,#ffd23f 50%,#ff9800);color:#5a3200;text-shadow:0 1px 0 rgba(255,255,255,.5);box-shadow:0 1px 4px rgba(255,152,0,.45)}
-.shine{position:relative;overflow:hidden;isolation:isolate}
-.shine::after{content:"";position:absolute;top:-20%;bottom:-20%;left:0;width:45%;pointer-events:none;z-index:1;
-  background:linear-gradient(105deg,transparent 0%,rgba(255,255,255,0) 20%,rgba(255,255,255,.85) 50%,rgba(255,255,255,0) 80%,transparent 100%);
-  transform:translateX(-160%) skewX(-18deg);animation:shine 2.6s ease-in-out infinite}
-@keyframes shine{0%{transform:translateX(-160%) skewX(-18deg)}55%,100%{transform:translateX(330%) skewX(-18deg)}}
 .chip.tw{background:linear-gradient(135deg,#ffb300,#ffd23f 50%,#ff9800);border-color:#ffb300;color:#5a3200;font-weight:700}
 .chip.tw.on{background:linear-gradient(135deg,#ff8f00,#ffc400 50%,#ff6f00);border-color:#ff8f00;color:#fff}
 .sec-h h2.tw{display:inline-block;padding:2px 12px;border-radius:10px;background:linear-gradient(135deg,#ffb300,#ffd23f 50%,#ff9800);color:#5a3200}
-@media (prefers-reduced-motion:reduce){.shine::after{animation:none;display:none}}
-.hot{background:linear-gradient(90deg,#d50000,#ff3d00,#ff9100,#ff3d00,#d50000);background-size:300% 100%;color:#fff;border-color:#ff3d00;
-  animation:fireflow 1.8s linear infinite,fireglow 1.1s ease-in-out infinite alternate;text-shadow:0 0 4px rgba(255,214,0,.8)}
-.hot::before{content:"🔥";display:inline-block;margin-right:3px;transform-origin:50% 90%;animation:flicker .45s ease-in-out infinite alternate}
-@keyframes fireflow{from{background-position:0% 50%}to{background-position:300% 50%}}
-@keyframes fireglow{from{box-shadow:0 0 4px rgba(255,61,0,.55),0 -1px 6px rgba(255,145,0,.35)}to{box-shadow:0 0 10px rgba(255,61,0,.9),0 -3px 14px rgba(255,196,0,.6)}}
-@keyframes flicker{0%{transform:scale(1) rotate(-6deg);filter:brightness(1)}50%{transform:scale(1.18,1.08) rotate(3deg);filter:brightness(1.3)}100%{transform:scale(.95,1.12) rotate(6deg);filter:brightness(1.1)}}
+.hot{background:linear-gradient(90deg,#d50000,#ff3d00 55%,#ff9100);color:#fff;border-color:#ff3d00;box-shadow:0 1px 5px rgba(255,61,0,.4)}
 .chip.hot,.chip.hot.on{color:#fff;font-weight:700;border-color:#ff3d00}
 .chip.hot.on{outline:2px solid #ffd600;outline-offset:1px}
 .sec-h h2.hot{display:inline-block;padding:2px 12px;border-radius:10px}
-@media (prefers-reduced-motion:reduce){.hot,.hot::before{animation:none}}
 .champ{background:linear-gradient(135deg,#1a1a1a,#3a2c00 55%,#1a1a1a);color:#ffd54f;border:1px solid #ffc107;font-weight:800;
-  box-shadow:0 0 0 1px rgba(255,193,7,.35),0 2px 8px rgba(255,179,0,.45);animation:champglow 1.6s ease-in-out infinite alternate}
-.champ::before{content:"👑";display:inline-block;margin-right:3px;transform-origin:50% 100%;animation:crown 1.4s ease-in-out infinite}
-.champ.shine::after{background:linear-gradient(105deg,transparent 0%,rgba(255,236,150,0) 25%,rgba(255,236,150,.9) 50%,rgba(255,236,150,0) 75%,transparent 100%)}
-@keyframes champglow{from{box-shadow:0 0 0 1px rgba(255,193,7,.35),0 2px 6px rgba(255,179,0,.35)}to{box-shadow:0 0 0 1px rgba(255,215,64,.8),0 0 14px rgba(255,193,7,.75)}}
-@keyframes crown{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-2px) rotate(8deg) scale(1.12)}}
+  box-shadow:0 0 0 1px rgba(255,193,7,.35),0 2px 8px rgba(255,179,0,.45)}
 .chip.champ,.chip.champ.on{color:#ffd54f;border-color:#ffc107}
 .chip.champ.on{outline:2px solid #ffc107;outline-offset:1px}
 .sec-h h2.champ{display:inline-block;padding:2px 12px;border-radius:10px}
-@media (prefers-reduced-motion:reduce){.champ,.champ::before{animation:none}}
 .card .tx{padding:9px 10px 10px;display:flex;flex-direction:column;flex:1}
 .card .br{font-size:11.5px;color:var(--ink3)}
 .card .nm{font-size:14px;font-weight:700;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:1px 0 6px}
@@ -387,7 +370,7 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 110px}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="q" type="search" placeholder="搜尋商品、品牌、功能（例：痘痘、保濕）" autocomplete="off">
     </label>
-    <div class="promo shine">🎉 網站訂購享 <b>95 折</b>　優惠碼 <b>TAIWANLOVE</b> 已自動套用</div>
+    <div class="promo">網站訂購享 <b>95 折</b>　優惠碼 <b>TAIWANLOVE</b> 已自動套用</div>
   </div>
   <div class="chips" id="chips"></div>
 </header>
@@ -455,7 +438,7 @@ function renderChips(){
   const sp = S.settings.specialCategories;
   const has = c => S.products.some(p => p.cats.includes(c));
   const btns = ['全部', ...sp.filter(has)].map(c =>
-    `<button class="chip ${sp.includes(c) ? 'sp' : ''} ${c === sp[2] ? 'tw shine' : c === sp[1] ? 'champ shine' : c === sp[0] ? 'hot' : ''} ${S.cat === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+    `<button class="chip ${sp.includes(c) ? 'sp' : ''} ${c === sp[2] ? 'tw' : c === sp[1] ? 'champ' : c === sp[0] ? 'hot' : ''} ${S.cat === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
   const fn = S.settings.functionCategories.filter(has);
   const inFn = fn.includes(S.cat);
   const sel = fn.length ? `<label class="chip fsel ${inFn ? 'on' : ''}"><span>${inFn ? esc(S.cat) : '依功效分類'}</span><span class="car">▾</span>
@@ -482,7 +465,7 @@ function cardHTML(p){
   return `
   <div class="card" data-id="${p.id}">
     <div class="im" data-open="${p.id}" style="${p.img ? `background-image:url('${esc(p.img)}')` : ''}">
-      <div class="tags">${tags.map(t => `<span class="tag ${tagClass(t)}${['tw','champ'].includes(tagClass(t)) ? ' shine' : ''}">${esc(t)}</span>`).join('')}</div>
+      <div class="tags">${tags.map(t => `<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>
     </div>
     <div class="tx">
       ${p.brand ? `<div class="br">${esc(p.brand)}</div>` : ''}
@@ -518,7 +501,7 @@ function render(){
   }
   if (S.cat !== '全部'){
     const res = list.filter(p => p.cats.includes(S.cat));
-    main.innerHTML = `<div class="sec-h"><h2 class="${tagClass(S.cat) === 'tw' ? 'tw shine' : tagClass(S.cat) === 'hot' ? 'hot' : tagClass(S.cat) === 'champ' ? 'champ shine' : ''}">${esc(S.cat)}</h2><span class="muted">${res.length} 項</span></div>
+    main.innerHTML = `<div class="sec-h"><h2 class="${tagClass(S.cat) === 'tw' ? 'tw' : tagClass(S.cat) === 'hot' ? 'hot' : tagClass(S.cat) === 'champ' ? 'champ' : ''}">${esc(S.cat)}</h2><span class="muted">${res.length} 項</span></div>
       ${res.length ? `<div class="grid">${res.map(cardHTML).join('')}</div>` : `<div class="empty">這個分類還沒有商品</div>`}`;
     return;
   }
@@ -526,7 +509,7 @@ function render(){
   S.settings.specialCategories.forEach(c => {
     const res = list.filter(p => p.cats.includes(c));
     if (!res.length) return;
-    html += `<div class="sec-h"><h2 class="${tagClass(c) === 'tw' ? 'tw shine' : tagClass(c) === 'hot' ? 'hot' : tagClass(c) === 'champ' ? 'champ shine' : ''}">${esc(c)}</h2><button data-goto="${esc(c)}">全部 ${res.length} ›</button></div>
+    html += `<div class="sec-h"><h2 class="${tagClass(c) === 'tw' ? 'tw' : tagClass(c) === 'hot' ? 'hot' : tagClass(c) === 'champ' ? 'champ' : ''}">${esc(c)}</h2><button data-goto="${esc(c)}">全部 ${res.length} ›</button></div>
              <div class="row">${res.map(cardHTML).join('')}</div>`;
   });
   html += `<div class="sec-h"><h2>所有商品</h2><span class="muted">${list.length} 項</span></div>
