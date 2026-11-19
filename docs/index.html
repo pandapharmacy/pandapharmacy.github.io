@@ -262,6 +262,7 @@ header{position:sticky;top:0;z-index:20;background:rgba(250,247,245,.96);backdro
 .upper{text-transform:uppercase}
 .iconbtn{position:relative;height:40px;min-width:40px;padding:0 10px;border-radius:12px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700}
 .iconbtn svg{width:20px;height:20px}
+@media (max-width:480px){.bar{gap:6px}.iconbtn{flex-direction:column;justify-content:center;gap:1px;height:46px;min-width:44px;padding:0 6px;font-size:10.5px;font-weight:600}.iconbtn svg{width:18px;height:18px}}
 .badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:11px;min-width:19px;height:19px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 5px}
 .search{padding:0 16px 10px;max-width:1100px;margin:0 auto}
 .search label{display:flex;align-items:center;gap:8px;height:44px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:0 12px}
@@ -342,6 +343,17 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 110px}
 .tabs2{display:flex;background:#efe9e7;border-radius:10px;padding:3px;margin-bottom:14px}
 .tabs2 button{flex:1;height:36px;border-radius:8px;font-weight:700;color:var(--ink2)}
 .tabs2 button.on{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
+.store{margin-bottom:22px}
+.store h3{margin:0 0 8px;font-size:18px;font-weight:900}
+.store .ph{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px 10px;padding:0 16px;scrollbar-width:none}
+.store .ph::-webkit-scrollbar{display:none}
+.store .ph img{flex:none;width:82%;max-width:420px;aspect-ratio:4/3;object-fit:cover;border-radius:12px;scroll-snap-align:start;background:#f3eeec}
+.store .ph img:only-child{width:100%}
+.store dl{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0 0 10px;font-size:14px}
+.store dt{color:var(--ink3);white-space:nowrap}
+.store dd{margin:0;white-space:pre-line;word-break:break-word}
+.store .acts{display:flex;gap:8px;flex-wrap:wrap}
+a.btn{text-decoration:none}
 .pdimg{aspect-ratio:1;border-radius:var(--r);background:#f3eeec center/cover;margin-bottom:12px}
 </style>
 </head>
@@ -349,6 +361,10 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 110px}
 <header>
   <div class="bar">
     <div class="logo"><span id="logoMain">熊貓藥局 <span class="en">Panda Pharmacy</span></span><small id="logoSub">臺灣客人專屬訂購網頁</small></div>
+    <button class="iconbtn" id="btnInfo" aria-label="藥局資訊">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10v10h16V10"/><path d="M2 10l2-6h16l2 6z"/><path d="M10 20v-5h4v5"/></svg>
+      <span>藥局資訊</span>
+    </button>
     <button class="iconbtn" id="btnMe" aria-label="會員">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
       <span id="meLabel">登入</span>
@@ -609,6 +625,31 @@ function openCart(){
     `<button class="btn block" onclick="startCheckout()">產出訂購單</button>`);
   $('#pBody').scrollTop = keep;
 }
+
+// ---------- 藥局資訊 ----------
+function storeInfo(name){ return (S.settings.stores || []).find(x => x.name === name) || {}; }
+function mapUrl(st, name){
+  if (st.map) return st.map;
+  const q = st.addr || ('Panda Pharmacy ' + name);
+  return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q);
+}
+function openInfo(){
+  const list = S.settings.pickups.map(p => {
+    const st = storeInfo(p.name), addr = st.addr || p.addr || '';
+    return `<div class="store">
+      <h3>${esc(p.name)}店</h3>
+      ${(st.photos || []).length ? `<div class="ph">${st.photos.map(u => `<img src="${esc(u)}" alt="${esc(p.name)}店環境" loading="lazy">`).join('')}</div>` : ''}
+      <dl>
+        ${addr ? `<dt>地址</dt><dd>${esc(addr)}</dd>` : ''}
+        ${st.hours ? `<dt>營業時間</dt><dd>${esc(st.hours)}</dd>` : ''}
+        ${st.note ? `<dt>交通／說明</dt><dd>${esc(st.note)}</dd>` : ''}
+      </dl>
+      <div class="acts"><a class="btn ghost sm" href="${esc(mapUrl(st, p.name))}" target="_blank" rel="noopener">開啟地圖</a></div>
+    </div>`;
+  }).join('');
+  openPanel('info', '藥局資訊', list || '<div class="empty">資訊準備中</div>');
+}
+$('#btnInfo').onclick = () => S.settings && openInfo();
 
 // ---------- 會員 ----------
 function renderMe(){ $('#meLabel').textContent = S.me ? '我的訂單' : '登入'; }

@@ -41,6 +41,11 @@ body{background:#f4f1ef}
 .rcard .rr{display:flex;justify-content:space-between;align-items:baseline;padding:3px 0}
 .rcard .rr span{color:var(--ink3,#888);font-size:13px}
 .rcard .rr b{font-size:18px}
+.sphotos{display:flex;flex-wrap:wrap;gap:10px}
+.sphotos .sp{position:relative;width:120px;height:90px;border-radius:10px;overflow:hidden;background:#f3eeec;border:1px solid var(--line)}
+.sphotos .sp img{width:100%;height:100%;object-fit:cover}
+.sphotos .sp .x{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:12px;background:rgba(0,0,0,.6);color:#fff;font-size:16px;line-height:1}
+.sphotos .add{display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink2);font-weight:700;border-style:dashed}
 .btn.del{color:#b3261e;border-color:#f0c8c5}
 .btn.del.sure{background:#b3261e;color:#fff;border-color:#b3261e}
 .pk{display:inline-block;color:var(--red);font-size:14px;font-weight:900}
@@ -192,12 +197,13 @@ function renderShell(){
     <div class="tabs">
       <button data-tab="orders" class="${A.tab === 'orders' ? 'on' : ''}">訂單${newCount ? ` (${newCount})` : ''}</button>
       <button data-tab="products" class="${A.tab === 'products' ? 'on' : ''}">商品</button>
+      <button data-tab="stores" class="${A.tab === 'stores' ? 'on' : ''}">藥局資訊</button>
       <button data-tab="settings" class="${A.tab === 'settings' ? 'on' : ''}">設定</button>
     </div>
   </div></div>
   <div class="wrap" id="view"></div>`;
   $$('[data-tab]').forEach(b => b.onclick = () => { A.tab = b.dataset.tab; renderShell(); });
-  ({ orders:renderOrders, products:renderProducts, settings:renderSettings })[A.tab]();
+  ({ orders:renderOrders, products:renderProducts, stores:renderStores, settings:renderSettings })[A.tab]();
 }
 
 // ================= 訂單 =================
@@ -460,6 +466,56 @@ function shrink(file, max){
     img.onerror = () => rej(new Error('無法讀取這張照片'));
     img.src = url;
   });
+}
+
+// ================= 藥局資訊 =================
+function renderStores(){
+  const s = A.settings;
+  const cur = s.pickups.map(p => {
+    const st = (s.stores || []).find(x => x.name === p.name) || {};
+    return { name:p.name, addr:st.addr || p.addr || '', hours:st.hours || '', map:st.map || '', note:st.note || '', photos:[...(st.photos || [])] };
+  });
+  A.storeDraft = cur;
+  $('#view').innerHTML = cur.map((st, i) => `
+    <div class="card2" data-si="${i}"><h3>${esc(st.name)}店</h3>
+      <label class="field"><span>地址（客人和地圖會用到，可韓文＋中文）</span><textarea data-k="addr" style="min-height:60px">${esc(st.addr)}</textarea></label>
+      <label class="field"><span>營業時間</span><textarea data-k="hours" style="min-height:60px" placeholder="例：每天 10:00–22:00">${esc(st.hours)}</textarea></label>
+      <label class="field"><span>交通／說明（選填）</span><textarea data-k="note" style="min-height:60px" placeholder="例：明洞站 6 號出口步行 2 分鐘">${esc(st.note)}</textarea></label>
+      <label class="field"><span>地圖連結（選填，貼 Google 地圖或 Naver 地圖分享網址；沒填就用地址搜尋）</span><input data-k="map" value="${esc(st.map)}"></label>
+      <div class="field"><span>環境照片（可一次選多張；第一張會先顯示）</span></div>
+      <div class="sphotos">${st.photos.map((u, j) => `<div class="sp"><img src="${esc(u)}"><button class="x" data-rm="${i}:${j}" title="刪除">×</button></div>`).join('')}
+        <label class="sp add"><input type="file" accept="image/jpeg,image/png,image/webp,image/heic" multiple data-up="${i}" hidden><span>＋ 加照片</span></label>
+      </div>
+      <div class="muted" data-upmsg="${i}" style="margin-top:6px"></div>
+    </div>`).join('') + `<button class="btn" id="stSave">儲存藥局資訊</button>
+    <div class="muted" style="margin-top:10px">儲存後客人頁面右上角「藥局資訊」就會顯示。</div>`;
+  const collect = () => $$('[data-si]').forEach(c => { const st = A.storeDraft[c.dataset.si]; $$('[data-k]', c).forEach(f => st[f.dataset.k] = f.value.trim()); });
+  $$('[data-rm]').forEach(b => b.onclick = () => {
+    collect(); const [i, j] = b.dataset.rm.split(':').map(Number); A.storeDraft[i].photos.splice(j, 1); redraw();
+  });
+  $$('[data-up]').forEach(inp => inp.onchange = async () => {
+    const i = Number(inp.dataset.up), msg = $(`[data-upmsg="${i}"]`), files = [...inp.files];
+    collect();
+    for (let k = 0; k < files.length; k++){
+      msg.textContent = `上傳中 ${k + 1}/${files.length}…`;
+      try{ A.storeDraft[i].photos.push(await uploadImage(await shrink(files[k], 1400))); }
+      catch(e){ toast('有一張照片上傳失敗：' + e.message); }
+    }
+    redraw(); toast('照片已上傳，記得按「儲存藥局資訊」');
+  });
+  $('#stSave').onclick = async () => {
+    collect(); $('#stSave').disabled = true;
+    const stores = A.storeDraft.map(x => ({ ...x }));
+    const pickups = A.settings.pickups.map(p => { const st = stores.find(x => x.name === p.name); return { name:p.name, addr:st ? st.addr.split('\n')[0] : p.addr }; });
+    try{ A.settings = await call('admin_saveSettings', { stores, pickups }); toast('藥局資訊已儲存'); renderStores(); }
+    catch(e){ toast(e.message); $('#stSave').disabled = false; }
+  };
+  function redraw(){ const d = A.storeDraft; renderStoresFrom(d); }
+}
+function renderStoresFrom(draft){
+  // 保留尚未儲存的內容重畫
+  const keep = A.settings.stores;
+  A.settings.stores = draft; renderStores(); A.settings.stores = keep;
 }
 
 // ================= 設定 =================
