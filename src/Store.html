@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>熊貓藥局 Panda Pharmacy｜臺灣客人專屬訂購</title>
+<?!= include('Shared'); ?>
+<style>
+header{position:sticky;top:0;z-index:20;background:rgba(250,247,245,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;gap:10px;padding:12px 16px 8px;max-width:1100px;margin:0 auto}
+.logo{flex:1;font-weight:900;font-size:19px;color:var(--red);letter-spacing:.5px;line-height:1.15}
+.logo small{display:block;font-size:11.5px;color:var(--ink2);font-weight:500;letter-spacing:0;margin-top:2px}
+.logo .en{font-size:13px;font-weight:700;letter-spacing:.3px;white-space:nowrap}
+.cpn{display:flex;gap:8px}
+.cpn input{flex:1;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;background:#fff;outline:none;text-transform:uppercase}
+.cpn input:focus{border-color:var(--red)}
+.cpn-ok{display:flex;align-items:center;justify-content:space-between;background:#e2f4ea;color:var(--green);border-radius:10px;padding:0 6px 0 12px;height:44px;font-weight:700}
+.seg{display:flex;gap:8px;margin-bottom:12px}
+.seg button{flex:1;height:44px;border:2px solid var(--line);border-radius:10px;background:#fff;font-weight:700}
+.seg button.on{border-color:var(--red);background:var(--red-soft);color:var(--red-d)}
+.req{color:var(--red)}
+.upper{text-transform:uppercase}
+.iconbtn{position:relative;height:40px;min-width:40px;padding:0 10px;border-radius:12px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700}
+.iconbtn svg{width:20px;height:20px}
+.badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:11px;min-width:19px;height:19px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.search{padding:0 16px 10px;max-width:1100px;margin:0 auto}
+.search label{display:flex;align-items:center;gap:8px;height:44px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:0 12px}
+.search label:focus-within{border-color:var(--red)}
+.search input{flex:1;border:0;outline:none;background:none;height:100%}
+.search svg{width:18px;height:18px;color:var(--ink3);flex:none}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:0 16px 12px;max-width:1100px;margin:0 auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;height:34px;padding:0 14px;border-radius:17px;background:#fff;border:1px solid var(--line);font-size:14px;white-space:nowrap}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip.sp{border-color:#f0cdd2;color:var(--red-d)}
+.chip.sp.on{background:var(--red);border-color:var(--red);color:#fff}
+main{max-width:1100px;margin:0 auto;padding:14px 16px 110px}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;margin:18px 0 10px}
+.sec-h h2{margin:0;font-size:18px;font-weight:900}
+.sec-h button{font-size:13px;color:var(--red);font-weight:700}
+.row{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;margin:0 -16px;padding-left:16px;padding-right:16px}
+.row::-webkit-scrollbar{display:none}
+.row .card{width:156px;flex:none}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(min-width:640px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:900px){.grid{grid-template-columns:repeat(4,1fr)}}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
+.card .im{aspect-ratio:1;background:#f3eeec center/cover no-repeat;position:relative}
+.card .im .tags{position:absolute;left:6px;top:6px;display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+.tag{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:6px;background:var(--red);color:#fff}
+.tag.panda{background:#222}
+.tag.tw{background:var(--gold)}
+.card .tx{padding:9px 10px 10px;display:flex;flex-direction:column;flex:1}
+.card .br{font-size:11.5px;color:var(--ink3)}
+.card .nm{font-size:14px;font-weight:700;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:1px 0 6px}
+.card .pr{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.card .pr b{font-size:16px;color:var(--red);font-variant-numeric:tabular-nums}
+.add{width:34px;height:34px;border-radius:10px;background:var(--red);color:#fff;font-size:22px;line-height:1;flex:none}
+.step{display:flex;align-items:center;background:var(--red-soft);border-radius:10px;height:34px}
+.step button{width:30px;height:34px;font-size:18px;color:var(--red);font-weight:700}
+.step span{min-width:20px;text-align:center;font-weight:700;font-size:14px}
+.empty{text-align:center;color:var(--ink3);padding:50px 0}
+.related{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.cartbar{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line);display:none}
+.cartbar.show{display:block}
+.cartbar .in{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.cartbar .in div{flex:1;font-size:13px;color:var(--ink2);line-height:1.3}
+.cartbar .in b{display:block;font-size:17px;color:var(--ink)}
+.citem{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);align-items:center}
+.citem .ci{width:56px;height:56px;border-radius:10px;background:#f3eeec center/cover;flex:none}
+.citem .cn{flex:1;min-width:0}
+.citem .cn b{display:block;font-size:14px;line-height:1.3}
+.citem .cn span{font-size:12.5px;color:var(--ink3)}
+.tot{background:#fff;border-radius:var(--r);padding:12px 14px;margin-top:14px;box-shadow:var(--shadow)}
+.tot div{display:flex;justify-content:space-between;padding:3px 0;font-size:14px}
+.tot .g{color:var(--green)}
+.tot .big{border-top:1px solid var(--line);margin-top:6px;padding-top:9px;font-size:17px;font-weight:900}
+.tot .big b{color:var(--red)}
+.hint{margin-top:10px;background:#fff7e6;color:#8a5a00;border-radius:10px;padding:9px 12px;font-size:13px}
+.picks{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.pickopt{border:2px solid var(--line);background:#fff;border-radius:12px;padding:14px 12px;text-align:left}
+.pickopt b{display:block;font-size:17px}
+.pickopt small{color:var(--ink3);font-size:12px}
+.pickopt.on{border-color:var(--red);background:var(--red-soft)}
+.olist{display:flex;flex-direction:column;gap:10px}
+.oitem{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:12px 14px;text-align:left;width:100%}
+.oitem .t{display:flex;justify-content:space-between;font-weight:700}
+.st{font-size:12px;padding:2px 8px;border-radius:6px;background:#eee;font-weight:700}
+.st.新訂單{background:#fff1d6;color:#8a5a00}.st.已傳藥局{background:#e3edff;color:#24489c}.st.已留貨{background:#e2f4ea;color:var(--green)}.st.已取貨{background:#ececec;color:#555}.st.已取消{background:#fbe3e3;color:#a11}
+.sheetwrap{background:#fff;border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+.sheetwrap .scaler{transform-origin:top left}
+.tabs2{display:flex;background:#efe9e7;border-radius:10px;padding:3px;margin-bottom:14px}
+.tabs2 button{flex:1;height:36px;border-radius:8px;font-weight:700;color:var(--ink2)}
+.tabs2 button.on{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
+.pdimg{aspect-ratio:1;border-radius:var(--r);background:#f3eeec center/cover;margin-bottom:12px}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="logo"><span id="logoMain">熊貓藥局 <span class="en">Panda Pharmacy</span></span><small id="logoSub">臺灣客人專屬訂購網頁</small></div>
+    <button class="iconbtn" id="btnMe" aria-label="會員">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+      <span id="meLabel">登入</span>
+    </button>
+    <button class="iconbtn" id="btnCart" aria-label="購物車">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6"/><circle cx="10" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/></svg>
+      <span class="badge" id="cartCount" hidden>0</span>
+    </button>
+  </div>
+  <div class="search">
+    <label>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="搜尋商品、品牌、功能（例：痘痘、保濕）" autocomplete="off">
+    </label>
+  </div>
+  <div class="chips" id="chips"></div>
+</header>
+
+<main id="main"><div class="spin"></div></main>
+
+<div class="cartbar" id="cartbar">
+  <div class="in">
+    <div id="cbText"></div>
+    <button class="btn" id="cbGo">查看購物車</button>
+  </div>
+</div>
+
+<div class="overlay" id="ov"></div>
+<div class="sheetpanel" id="panel">
+  <div class="hd"><span id="pTitle"></span><button class="x" id="pClose">×</button></div>
+  <div class="bd" id="pBody"></div>
+  <div class="ft" id="pFoot"></div>
+</div>
+
+<script>
+const S = { settings:null, products:[], byId:{}, cat:'全部', q:'', cart:{}, token:null, me:null, orders:null, coupon:null };
+const rate = () => S.coupon ? S.coupon.rate : 0;
+
+// ---------- 本機儲存（失敗就只存在記憶體） ----------
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+
+// ---------- 初始化 ----------
+(async function init(){
+  S.cart = store.get('cb_cart', {});
+  S.token = store.get('cb_token', null);
+  S.coupon = store.get('cb_coupon', null);
+  try{
+    const d = await api('api_bootstrap');
+    S.settings = d.settings; S.products = d.products;
+    const shop = String(S.settings.shopName || '').split('｜');
+    if (shop[0]) $('#logoMain').innerHTML = esc(shop[0]).replace(/ ([A-Za-z].*)$/, ' <span class="en">$1</span>');
+    if (shop[1]) $('#logoSub').textContent = shop[1];
+    S.products.forEach(p => S.byId[p.id] = p);
+    Object.keys(S.cart).forEach(id => { if(!S.byId[id]) delete S.cart[id]; });
+    renderChips(); render(); renderCartBar();
+  }catch(e){
+    $('#main').innerHTML = `<div class="empty">讀取失敗：${esc(e.message)}<br><br><button class="btn" onclick="location.reload()">重新整理</button></div>`;
+  }
+  if (S.token){
+    try{ S.me = await api('api_me', S.token); }catch(e){ S.token = null; store.del('cb_token'); }
+  }
+  renderMe();
+})();
+
+function allCats(){ return [...S.settings.specialCategories, ...S.settings.functionCategories]; }
+function tagClass(c){ return c === S.settings.specialCategories[1] ? 'panda' : c === S.settings.specialCategories[2] ? 'tw' : ''; }
+
+// ---------- 分類列 ----------
+function renderChips(){
+  const sp = S.settings.specialCategories;
+  const cats = ['全部', ...allCats()].filter(c => c === '全部' || S.products.some(p => p.cats.includes(c)));
+  $('#chips').innerHTML = cats.map(c =>
+    `<button class="chip ${sp.includes(c) ? 'sp' : ''} ${S.cat === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+}
+$('#chips').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if(!b) return;
+  S.cat = b.dataset.c; S.q = ''; $('#q').value = '';
+  renderChips(); render(); window.scrollTo({top:0});
+});
+
+let qTimer;
+$('#q').addEventListener('input', e => {
+  clearTimeout(qTimer);
+  qTimer = setTimeout(() => { S.q = e.target.value.trim(); if (S.q) S.cat = '全部'; renderChips(); render(); }, 150);
+});
+
+// ---------- 商品卡 ----------
+function cardHTML(p){
+  const qty = S.cart[p.id] || 0;
+  const tags = p.cats.filter(c => S.settings.specialCategories.includes(c));
+  return `
+  <div class="card" data-id="${p.id}">
+    <div class="im" data-open="${p.id}" style="${p.img ? `background-image:url('${esc(p.img)}')` : ''}">
+      <div class="tags">${tags.map(t => `<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>
+    </div>
+    <div class="tx">
+      ${p.brand ? `<div class="br">${esc(p.brand)}</div>` : ''}
+      <div class="nm" data-open="${p.id}">${esc(p.name)}</div>
+      <div class="pr"><b>${won(p.price)}</b>${stepHTML(p.id, qty)}</div>
+    </div>
+  </div>`;
+}
+function stepHTML(id, qty){
+  return qty
+    ? `<div class="step"><button data-dec="${id}">−</button><span>${qty}</span><button data-inc="${id}">+</button></div>`
+    : `<button class="add" data-inc="${id}" aria-label="加入購物車">+</button>`;
+}
+
+// ---------- 搜尋比對 ----------
+function matches(p, q){
+  const hay = norm([p.name, p.nameKo, p.brand, p.keywords, p.desc, ...p.cats].join(' '));
+  return q.split(/\s+/).map(norm).filter(Boolean).every(t => hay.includes(t));
+}
+
+// ---------- 主畫面 ----------
+function render(){
+  const main = $('#main');
+  const list = S.products;
+  if (S.q){
+    const relCats = allCats().filter(c => norm(c).includes(norm(S.q)) || norm(S.q).includes(norm(c)));
+    const res = list.filter(p => matches(p, S.q) || p.cats.some(c => relCats.includes(c)));
+    main.innerHTML = `
+      ${relCats.length ? `<div class="muted" style="margin-bottom:6px">相關分類</div><div class="related">${relCats.map(c => `<button class="chip ${S.settings.specialCategories.includes(c) ? 'sp' : ''}" data-goto="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}
+      <div class="muted" style="margin-bottom:10px">「${esc(S.q)}」找到 ${res.length} 項</div>
+      ${res.length ? `<div class="grid">${res.map(cardHTML).join('')}</div>` : `<div class="empty">找不到相關商品，換個關鍵字試試</div>`}`;
+    return;
+  }
+  if (S.cat !== '全部'){
+    const res = list.filter(p => p.cats.includes(S.cat));
+    main.innerHTML = `<div class="sec-h"><h2>${esc(S.cat)}</h2><span class="muted">${res.length} 項</span></div>
+      ${res.length ? `<div class="grid">${res.map(cardHTML).join('')}</div>` : `<div class="empty">這個分類還沒有商品</div>`}`;
+    return;
+  }
+  let html = '';
+  S.settings.specialCategories.forEach(c => {
+    const res = list.filter(p => p.cats.includes(c));
+    if (!res.length) return;
+    html += `<div class="sec-h"><h2>${esc(c)}</h2><button data-goto="${esc(c)}">全部 ${res.length} ›</button></div>
+             <div class="row">${res.map(cardHTML).join('')}</div>`;
+  });
+  html += `<div class="sec-h"><h2>所有商品</h2><span class="muted">${list.length} 項</span></div>
+           ${list.length ? `<div class="grid">${list.map(cardHTML).join('')}</div>` : `<div class="empty">商品準備中</div>`}`;
+  main.innerHTML = html;
+}
+
+document.body.addEventListener('click', e => {
+  const t = e.target.closest('[data-inc],[data-dec],[data-open],[data-goto]');
+  if (!t) return;
+  if (t.dataset.inc) changeQty(t.dataset.inc, 1);
+  else if (t.dataset.dec) changeQty(t.dataset.dec, -1);
+  else if (t.dataset.open) openProduct(t.dataset.open);
+  else if (t.dataset.goto){ S.cat = t.dataset.goto; S.q = ''; $('#q').value = ''; renderChips(); render(); window.scrollTo({top:0}); }
+});
+
+// ---------- 購物車 ----------
+function changeQty(id, d){
+  const q = Math.max(0, Math.min(99, (S.cart[id] || 0) + d));
+  if (q) S.cart[id] = q; else delete S.cart[id];
+  store.set('cb_cart', S.cart);
+  $$(`.card[data-id="${id}"] .pr`).forEach(el => { el.innerHTML = `<b>${won(S.byId[id].price)}</b>${stepHTML(id, q)}`; });
+  if (d > 0 && q === 1) toast('已加入購物車');
+  renderCartBar();
+  if (panelMode === 'cart') openCart();
+  if (panelMode === 'product') openProduct(id);
+}
+function cartLines(){
+  return Object.keys(S.cart).filter(id => S.byId[id]).map(id => ({ p:S.byId[id], qty:S.cart[id] }));
+}
+function cartSubtotal(){ return cartLines().reduce((a, l) => a + l.p.price * l.qty, 0); }
+function renderCartBar(){
+  const n = cartLines().reduce((a, l) => a + l.qty, 0);
+  $('#cartCount').hidden = !n; $('#cartCount').textContent = n;
+  $('#cartbar').classList.toggle('show', !!n && panelMode !== 'cart' && panelMode !== 'checkout');
+  if (n){
+    const t = totals(cartSubtotal(), S.settings, rate());
+    $('#cbText').innerHTML = `${n} 件・商品總價 ${won(t.subtotal)}<b>預估花費 ${won(t.net)}</b>`;
+  }
+}
+$('#btnCart').onclick = $('#cbGo').onclick = () => openCart();
+
+function totalsHTML(sub){
+  const s = S.settings, t = totals(sub, s, rate()), nb = nextBracket(sub, s);
+  const pct = S.coupon ? Math.round(S.coupon.rate * 1000) / 10 : 0;
+  return `<div class="tot">
+    <div><span>商品總價</span><span class="won">${won(t.subtotal)}</span></div>
+    ${S.coupon ? `<div class="g"><span>優惠碼 ${esc(S.coupon.code)}（${pct}%）</span><span class="won">−${won(t.discount)}</span></div>` : ''}
+    <div class="g"><span>預估退稅</span><span class="won">−${won(t.refund)}</span></div>
+    <div class="big"><span>預估實際花費</span><b class="won">${won(t.net)}</b></div>
+  </div>
+  ${nb ? `<div class="hint">再買 <b>${won(nb.need)}</b>，退稅可以提高到 <b>${won(nb.refund)}</b></div>` : ''}`;
+}
+
+// ---------- 底部面板 ----------
+let panelMode = null;
+function openPanel(mode, title, body, foot){
+  panelMode = mode;
+  $('#pTitle').textContent = title; $('#pBody').innerHTML = body; $('#pFoot').innerHTML = foot || '';
+  $('#pFoot').style.display = foot ? '' : 'none';
+  $('#ov').classList.add('open'); $('#panel').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  renderCartBar();
+}
+function closePanel(){
+  panelMode = null;
+  $('#ov').classList.remove('open'); $('#panel').classList.remove('open');
+  document.body.style.overflow = '';
+  renderCartBar();
+}
+$('#ov').onclick = $('#pClose').onclick = closePanel;
+
+function openProduct(id){
+  const p = S.byId[id]; if (!p) return;
+  const keep = $('#pBody').scrollTop;
+  openPanel('product', p.brand || '商品', `
+    <div class="pdimg" style="${p.img ? `background-image:url('${esc(p.img)}')` : ''}"></div>
+    <div style="font-size:19px;font-weight:900;line-height:1.35">${esc(p.name)}</div>
+    ${p.nameKo ? `<div class="muted">${esc(p.nameKo)}</div>` : ''}
+    <div style="font-size:22px;font-weight:900;color:var(--red);margin:8px 0">${won(p.price)}</div>
+    <div class="related">${p.cats.map(c => `<button class="chip" data-goto="${esc(c)}" onclick="closePanel()">${esc(c)}</button>`).join('')}</div>
+    ${p.desc ? `<div style="white-space:pre-wrap;color:var(--ink2);font-size:14px">${esc(p.desc)}</div>` : ''}`,
+    `<div style="display:flex;gap:10px;align-items:center">
+      <div style="flex:1">${S.cart[id] ? `<div class="step" style="width:120px;justify-content:space-between;height:44px"><button data-dec="${id}">−</button><span>${S.cart[id]}</span><button data-inc="${id}">+</button></div>` : ''}</div>
+      ${S.cart[id] ? `<button class="btn" onclick="openCart()">前往購物車</button>` : `<button class="btn" data-inc="${id}">加入購物車</button>`}
+    </div>`);
+  $('#pBody').scrollTop = keep;
+}
+
+function openCart(){
+  const lines = cartLines();
+  if (!lines.length){
+    openPanel('cart', '購物車', `<div class="empty">購物車是空的</div>`, `<button class="btn block" onclick="closePanel()">去逛逛</button>`);
+    return;
+  }
+  const keep = $('#pBody').scrollTop;
+  openPanel('cart', `購物車（${lines.length} 項）`,
+    lines.map(({p, qty}) => `
+      <div class="citem">
+        <div class="ci" style="${p.img ? `background-image:url('${esc(p.img)}')` : ''}"></div>
+        <div class="cn"><b>${esc(p.name)}</b><span>${won(p.price)} × ${qty} ＝ <b style="display:inline;color:var(--ink)">${won(p.price * qty)}</b></span></div>
+        <div class="step"><button data-dec="${p.id}">−</button><span>${qty}</span><button data-inc="${p.id}">+</button></div>
+      </div>`).join('') + totalsHTML(cartSubtotal()),
+    `<button class="btn block" onclick="startCheckout()">產出訂購單</button>`);
+  $('#pBody').scrollTop = keep;
+}
+
+// ---------- 會員 ----------
+function renderMe(){ $('#meLabel').textContent = S.me ? '我的訂單' : '登入'; }
+$('#btnMe').onclick = () => S.me ? openMyOrders() : openAuth();
+
+let authMethod = 'LINE';
+function openAuth(after, tab){
+  tab = tab || 'login';
+  const reg = tab === 'reg';
+  openPanel('auth', '會員', `
+    <div class="tabs2"><button data-t="login" class="${!reg ? 'on' : ''}">登入</button><button data-t="reg" class="${reg ? 'on' : ''}">註冊</button></div>
+    ${after ? `<div class="hint" style="margin:0 0 14px">產出訂購單前請先登入，之後可以在「我的訂單」隨時查看</div>` : ''}
+    <div class="field"><span>聯繫方式 <b class="req">*</b></span></div>
+    <div class="seg">${['LINE', '微信'].map(m => `<button data-m="${m}" class="${authMethod === m ? 'on' : ''}">${m}</button>`).join('')}</div>
+    <label class="field"><span id="aCidLbl">${authMethod} ID <b class="req">*</b></span><input id="aCid" autocomplete="username" autocapitalize="off" placeholder="${authMethod === 'LINE' ? 'LINE ID（沒有設定 ID 可填手機號碼）' : '你的微信號'}"></label>
+    ${reg ? `<label class="field"><span>護照英文姓名 <b class="req">*</b></span><input id="aName" class="upper" autocomplete="name" autocapitalize="characters" placeholder="例：WANG XIAO MING"></label>` : ''}
+    <label class="field"><span>密碼${reg ? '（至少 6 碼）' : ''} <b class="req">*</b></span><input id="aPw" type="password" autocomplete="${reg ? 'new-password' : 'current-password'}"></label>
+    <div id="aErr" style="color:var(--red);font-size:13px;min-height:20px"></div>`,
+    `<button class="btn block" id="aGo">${reg ? '註冊並登入' : '登入'}</button>`);
+  $$('.tabs2 button').forEach(b => b.onclick = () => openAuth(after, b.dataset.t));
+  $$('[data-m]').forEach(b => b.onclick = () => {
+    authMethod = b.dataset.m;
+    $$('[data-m]').forEach(x => x.classList.toggle('on', x === b));
+    $('#aCidLbl').innerHTML = `${authMethod} ID <b class="req">*</b>`;
+    $('#aCid').placeholder = authMethod === 'LINE' ? 'LINE ID（沒有設定 ID 可填手機號碼）' : '你的微信號';
+  });
+  $('#aGo').onclick = async () => {
+    const btn = $('#aGo'); btn.disabled = true; $('#aErr').textContent = '';
+    try{
+      const r = reg
+        ? await api('api_register', authMethod, $('#aCid').value, $('#aName').value, $('#aPw').value)
+        : await api('api_login', authMethod, $('#aCid').value, $('#aPw').value);
+      S.token = r.token; S.me = { name:r.name, method:r.method, cid:r.cid }; S.orders = null;
+      store.set('cb_token', r.token); renderMe();
+      toast(`歡迎，${r.name}`);
+      after ? after() : closePanel();
+    }catch(e){ $('#aErr').textContent = e.message; btn.disabled = false; }
+  };
+}
+
+function logout(){
+  S.token = null; S.me = null; S.orders = null; store.del('cb_token'); renderMe(); closePanel(); toast('已登出');
+}
+
+// ---------- 結帳 ----------
+let pickSel = null;
+const seoulToday = () => { try{ return new Date().toLocaleDateString('en-CA', { timeZone:'Asia/Seoul' }); }catch(e){ return new Date().toISOString().slice(0, 10); } };
+const NAME_RE = /^[A-Z][A-Z ,.'\-]{1,59}$/;
+const cleanName = v => String(v || '').trim().replace(/\s+/g, ' ').toUpperCase();
+
+function couponHTML(){
+  return S.coupon
+    ? `<div class="cpn-ok"><span>✓ 已套用 ${esc(S.coupon.code)}（折 ${Math.round(S.coupon.rate * 1000) / 10}%）</span><button class="btn ghost sm" id="cpDel">移除</button></div>`
+    : `<div class="cpn"><input id="cpIn" placeholder="有優惠碼請輸入" autocapitalize="characters" autocomplete="off"><button class="btn ghost" id="cpGo">套用</button></div>
+       <div id="cpErr" style="color:var(--red);font-size:13px;margin-top:4px"></div>`;
+}
+function bindCoupon(){
+  const refresh = () => { $('#cpBox').innerHTML = couponHTML(); $('#ckTot').innerHTML = totalsHTML(cartSubtotal()); bindCoupon(); renderCartBar(); };
+  if ($('#cpDel')) $('#cpDel').onclick = () => { S.coupon = null; store.del('cb_coupon'); refresh(); };
+  if ($('#cpGo')){
+    const go = async () => {
+      const code = $('#cpIn').value.trim(); if (!code) return;
+      $('#cpGo').disabled = true; $('#cpErr').textContent = '';
+      try{ S.coupon = await api('api_checkCoupon', code); store.set('cb_coupon', S.coupon); toast('優惠碼已套用'); refresh(); }
+      catch(e){ $('#cpErr').textContent = e.message; $('#cpGo').disabled = false; }
+    };
+    $('#cpGo').onclick = go;
+    $('#cpIn').onkeydown = e => { if (e.key === 'Enter') go(); };
+  }
+}
+
+let ckMethod = 'LINE';
+function startCheckout(){
+  if (!S.me) return openAuth(startCheckout);
+  const s = S.settings;
+  ckMethod = S.me.method || ckMethod;
+  openPanel('checkout', '產出訂購單', `
+    <div class="field"><span>取貨地點 <b class="req">*</b></span></div>
+    <div class="picks">${s.pickups.map(p => `<button class="pickopt ${pickSel === p.name ? 'on' : ''}" data-pick="${esc(p.name)}"><b>${esc(p.name)}</b><small>${esc(p.addr || '韓國藥局現場取貨結帳')}</small></button>`).join('')}</div>
+    <label class="field"><span>預計取貨日（韓國時間）<b class="req">*</b></span><input id="cDate" type="date" min="${seoulToday()}"></label>
+    <label class="field"><span>護照英文姓名 <b class="req">*</b>（取貨時核對護照）</span><input id="cName" class="upper" value="${esc(S.me.name)}" autocapitalize="characters" placeholder="例：WANG XIAO MING"></label>
+    <div class="field"><span>聯繫方式 <b class="req">*</b></span></div>
+    <div class="seg">${['LINE', '微信'].map(m => `<button data-cm="${m}" class="${ckMethod === m ? 'on' : ''}">${m}</button>`).join('')}</div>
+    <label class="field"><span id="cCidLbl">${ckMethod} ID <b class="req">*</b></span><input id="cCid" value="${esc(S.me.cid || '')}" autocapitalize="off" placeholder="${ckMethod === 'LINE' ? 'LINE ID（沒有設定 ID 可填手機號碼）' : '微信號'}"></label>
+    <div class="field"><span>優惠碼</span><div id="cpBox">${couponHTML()}</div></div>
+    <label class="field"><span>備註（選填）</span><textarea id="cNote" maxlength="300" placeholder="例：預計下午 3 點到"></textarea></label>
+    <div id="ckTot">${totalsHTML(cartSubtotal())}</div>`,
+    `<button class="btn block" id="cGo">確認送出訂購單</button>`);
+  $$('[data-pick]').forEach(b => b.onclick = () => { pickSel = b.dataset.pick; $$('[data-pick]').forEach(x => x.classList.toggle('on', x === b)); });
+  $$('[data-cm]').forEach(b => b.onclick = () => {
+    ckMethod = b.dataset.cm;
+    $$('[data-cm]').forEach(x => x.classList.toggle('on', x === b));
+    $('#cCidLbl').innerHTML = `${ckMethod} ID <b class="req">*</b>`;
+    $('#cCid').placeholder = ckMethod === 'LINE' ? 'LINE ID（沒有設定 ID 可填手機號碼）' : '微信號';
+  });
+  bindCoupon();
+  $('#cGo').onclick = submitOrder;
+}
+
+async function submitOrder(){
+  const name = cleanName($('#cName').value), date = $('#cDate').value;
+  if (!pickSel) return toast('請選擇取貨地點');
+  if (!date) return toast('請選擇預計取貨日');
+  if (date < seoulToday()) return toast('預計取貨日不能早於今天');
+  if (!NAME_RE.test(name)) return toast('請輸入護照上的英文姓名（例：WANG XIAO MING）');
+  const cid = $('#cCid').value.trim();
+  if (cid.length < 2) return toast(`請輸入 ${ckMethod} ID`);
+  if ($('#cpIn') && $('#cpIn').value.trim()) return toast('優惠碼請先按「套用」，或清空再送出');
+  const btn = $('#cGo'); btn.disabled = true; btn.textContent = '送出中…';
+  try{
+    const o = await api('api_placeOrder', S.token, {
+      items: cartLines().map(l => ({ id:l.p.id, qty:l.qty })),
+      pickup: pickSel, date, name, method: ckMethod, cid, note: $('#cNote').value,
+      coupon: S.coupon ? S.coupon.code : ''
+    });
+    S.cart = {}; store.set('cb_cart', S.cart); S.orders = null;
+    $$('.card').forEach(el => { const id = el.dataset.id; $('.pr', el).innerHTML = `<b>${won(S.byId[id].price)}</b>${stepHTML(id, 0)}`; });
+    renderCartBar();
+    showOrder(o, true);
+  }catch(e){
+    if (e.message === 'LOGIN'){ S.me = null; S.token = null; store.del('cb_token'); renderMe(); return openAuth(startCheckout); }
+    if (/優惠碼/.test(e.message)){ S.coupon = null; store.del('cb_coupon'); if ($('#cpBox')){ $('#cpBox').innerHTML = couponHTML(); $('#ckTot').innerHTML = totalsHTML(cartSubtotal()); bindCoupon(); } }
+    toast(e.message); btn.disabled = false; btn.textContent = '確認送出訂購單';
+  }
+}
+
+// ---------- 訂購單 ----------
+function showOrder(o, fresh){
+  openPanel('order', fresh ? '訂購單已送出 ✓' : '訂購單', `
+    ${fresh ? `<div class="hint" style="margin:0 0 14px;background:#e2f4ea;color:var(--green)">熊貓藥局已收到你的訂購單，會幫你留貨。可以在「我的訂單」隨時查看。</div>` : ''}
+    <div class="sheetwrap"><div class="scaler">${orderSheetHTML(o, S.settings, 'customer')}</div></div>`,
+    `<div style="display:flex;gap:10px"><button class="btn ghost" style="flex:1" id="dImg">存成圖片</button><button class="btn" style="flex:1" id="dPdf">下載 PDF</button></div>`);
+  fitSheet();
+  $('#dImg').onclick = () => exportImage(o, S.settings, 'customer').catch(e => toast('產生失敗：' + e.message));
+  $('#dPdf').onclick = () => exportPDF(o, S.settings, 'customer').catch(e => toast('產生失敗：' + e.message));
+}
+function fitSheet(){
+  const w = $('.sheetwrap'); if (!w) return;
+  const sc = $('.scaler', w), k = w.clientWidth / 760;
+  sc.style.transform = `scale(${k})`; w.style.height = sc.firstElementChild.offsetHeight * k + 'px';
+}
+window.addEventListener('resize', fitSheet);
+
+async function openMyOrders(){
+  openPanel('orders', '我的訂單', `<div class="spin"></div>`,
+    `<div style="display:flex;justify-content:space-between;align-items:center"><span class="muted">${esc(S.me.name)}・${esc(S.me.method)} ${esc(S.me.cid)}</span><button class="btn ghost sm" onclick="logout()">登出</button></div>`);
+  try{
+    if (!S.orders) S.orders = await api('api_myOrders', S.token);
+    if (panelMode !== 'orders') return;
+    $('#pBody').innerHTML = S.orders.length ? `<div class="olist">${S.orders.map((o, i) => `
+      <button class="oitem" data-oi="${i}">
+        <div class="t"><span>${esc(o.no)}</span><span class="st ${esc(o.status)}">${esc(o.status)}</span></div>
+        <div class="muted">${esc(o.created)}・${esc(o.pickup)}取貨${o.date ? '・' + esc(o.date) : ''}</div>
+        <div style="margin-top:4px">${o.items.length} 項商品・<b class="won">${won(o.subtotal)}</b></div>
+      </button>`).join('')}</div>` : `<div class="empty">還沒有訂單</div>`;
+    $$('[data-oi]').forEach(b => b.onclick = () => showOrder(S.orders[b.dataset.oi]));
+  }catch(e){
+    if (e.message === 'LOGIN'){ logout(); return openAuth(); }
+    $('#pBody').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --red:#c8102e; --red-d:#9e0b23; --red-soft:#fbeaec;
+  --ink:#1d1a1a; --ink2:#5b5555; --ink3:#948d8d;
+  --line:#ece6e4; --bg:#faf7f5; --card:#fff;
+  --gold:#b88a2e; --green:#1f7a4d;
+  --r:14px; --shadow:0 1px 2px rgba(40,20,20,.06),0 4px 14px rgba(40,20,20,.06);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans TC','Noto Sans KR',system-ui,sans-serif;font-size:15px;line-height:1.5}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:44px;padding:0 18px;border-radius:12px;font-weight:700;background:var(--red);color:#fff;transition:background .15s}
+.btn:active{background:var(--red-d)}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn.block{width:100%}
+.btn.sm{height:34px;padding:0 12px;font-size:13px;border-radius:9px}
+.field{display:block;margin-bottom:12px}
+.field>span{display:block;font-size:13px;color:var(--ink2);margin-bottom:5px;font-weight:500}
+.field input,.field select,.field textarea{width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;background:#fff;outline:none}
+.field textarea{height:auto;min-height:80px;padding:10px 12px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--red)}
+.won{font-variant-numeric:tabular-nums}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:99;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.overlay{position:fixed;inset:0;background:rgba(20,10,10,.45);z-index:50;display:none}
+.overlay.open{display:block}
+.sheetpanel{position:fixed;left:0;right:0;bottom:0;max-height:92vh;background:var(--bg);border-radius:20px 20px 0 0;z-index:51;transform:translateY(105%);transition:transform .25s ease;display:flex;flex-direction:column;max-width:720px;margin:0 auto}
+.sheetpanel.open{transform:none}
+.sheetpanel .hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);font-weight:700;font-size:17px}
+.sheetpanel .bd{overflow:auto;padding:16px 18px;flex:1}
+.sheetpanel .ft{padding:12px 18px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:#fff}
+.x{width:34px;height:34px;border-radius:50%;background:#f1ecea;font-size:18px;line-height:34px}
+.muted{color:var(--ink3);font-size:13px}
+.spin{width:22px;height:22px;border:3px solid var(--red-soft);border-top-color:var(--red);border-radius:50%;animation:sp 0.8s linear infinite;margin:30px auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ===== 訂購單（輸出圖片 / PDF 用，固定寬度） ===== */
+.os{width:760px;background:#fff;color:#1d1a1a;padding:40px 44px;font-family:'Noto Sans TC','Noto Sans KR',sans-serif}
+.os .top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid var(--red);padding-bottom:16px}
+.os .brand{font-size:26px;font-weight:900;color:var(--red);letter-spacing:1px}
+.os .sub{font-size:14px;color:#5b5555;margin-top:2px}
+.os .no{text-align:right;font-size:13px;color:#5b5555}
+.os .no b{display:block;font-size:20px;color:#1d1a1a;letter-spacing:1px}
+.os .meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;margin:18px 0;font-size:15px}
+.os .meta div span{color:#948d8d;margin-right:8px}
+.os .pick{color:var(--red);font-weight:900;font-size:19px;letter-spacing:1px}
+.os .meta .hl{font-size:17px}
+.os table{width:100%;border-collapse:collapse;font-size:14px}
+.os th{background:#f6efed;text-align:left;padding:9px 8px;font-weight:700;border-bottom:1px solid #e3d9d6}
+.os td{padding:9px 8px;border-bottom:1px solid #eee5e2;vertical-align:top}
+.os td.n,.os th.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.os td .ko{color:#948d8d;font-size:12px}
+.os .sum{margin-top:16px;margin-left:auto;width:340px;font-size:15px}
+.os .sum div{display:flex;justify-content:space-between;padding:5px 0}
+.os .sum .minus{color:var(--green)}
+.os .sum .grand{border-top:2px solid #1d1a1a;margin-top:6px;padding-top:10px;font-size:19px;font-weight:900}
+.os .grand b{color:var(--red)}
+.os .note{margin-top:22px;font-size:12px;color:#948d8d;border-top:1px dashed #e3d9d6;padding-top:12px}
+.os.ko-mode .brand{font-family:'Noto Sans KR',sans-serif}
+</style>
+
+<script>
+const $ = (s, el) => (el || document).querySelector(s);
+const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
+const won = n => '₩' + Math.round(n || 0).toLocaleString('en-US');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function toast(msg){
+  let t = $('#toast');
+  if(!t){ t = document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+// 呼叫後端：回傳 Promise，失敗會 reject(Error)
+// 後端：Supabase（資料庫函式），網址與公開金鑰在建置時填入
+const SUPA_URL = '%%SUPA_URL%%';
+const SUPA_KEY = '%%SUPA_KEY%%';
+function api(fn, ...args){
+  return fetch(`${SUPA_URL}/rest/v1/rpc/${fn.toLowerCase()}`, {
+    method:'POST',
+    headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer ' + SUPA_KEY, 'Content-Type':'application/json' },
+    body: JSON.stringify({ args })
+  }).catch(() => { throw new Error('連線失敗，請檢查網路後再試'); })
+    .then(r => r.json().catch(() => ({})).then(j => {
+      if (j && j.ok) return j.data;
+      throw new Error(j && j.error ? j.error : (j && j.message ? '系統錯誤：' + j.message : '連線失敗，請稍後再試'));
+    }));
+}
+// 上傳商品照片到 Supabase Storage，回傳公開網址
+async function uploadImage(blob, name){
+  const path = `p/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+  const r = await fetch(`${SUPA_URL}/storage/v1/object/product-images/${path}`, {
+    method:'POST', headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer ' + SUPA_KEY, 'Content-Type':'image/jpeg', 'x-upsert':'false' }, body: blob });
+  if (!r.ok) throw new Error('照片上傳失敗（' + r.status + '）');
+  return `${SUPA_URL}/storage/v1/object/public/product-images/${path}`;
+}
+
+// 金額計算：和 Code.gs 的 totals_ 同一套
+function refundFor(total, s){
+  if (total >= s.refundAboveFrom) return Math.floor(total * s.refundAbovePct / 100) * 100;
+  let r = 0; (s.refundTable || []).forEach(row => { if (total >= row[0]) r = row[1]; });
+  return r;
+}
+function totals(subtotal, s, rate){
+  const discount = Math.round(subtotal * (rate > 0 ? rate : 0));
+  const refund = refundFor(subtotal, s);
+  return { subtotal, discount, refund, net: subtotal - discount - refund };
+}
+// 距離下一個退稅級距還差多少
+function nextBracket(total, s){
+  if (total >= s.refundAboveFrom) return null;
+  const rows = (s.refundTable || []).filter(r => r[0] > total);
+  if (!rows.length) return null;
+  return { need: rows[0][0] - total, refund: rows[0][1] };
+}
+
+// 訂購單 HTML。mode: 'customer'（中文、含優惠退稅）或 'pharmacy'（韓文、給藥局老闆）
+function orderSheetHTML(o, s, mode){
+  const ko = mode === 'pharmacy';
+  const shop = String(s.shopName || '熊貓藥局 Panda Pharmacy｜臺灣客人專屬訂購網頁').split('｜');
+  const pk = (s.pickups || []).find(p => p.name === o.pickup) || { name: o.pickup, addr: '' };
+  const rows = o.items.map((it, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${ko ? `<b>${esc(it.nameKo || it.name)}</b>${it.nameKo ? `<div class="ko">${esc(it.name)}</div>` : ''}`
+               : `<b>${esc(it.name)}</b>${it.brand ? `<div class="ko">${esc(it.brand)}${it.nameKo ? '・' + esc(it.nameKo) : ''}</div>` : ''}`}</td>
+      <td class="n">${won(it.price)}</td>
+      <td class="n">${it.qty}</td>
+      <td class="n">${won(it.amount)}</td>
+    </tr>`).join('');
+  const qty = o.items.reduce((a, b) => a + b.qty, 0);
+  const L = ko
+    ? { title:'약국 예약 주문서', sub:'대만 고객 주문 · 상품 보관 요청', no:'주문번호', name:'고객명 (여권 영문)', phone:'연락처', time:'주문일시', pick:'픽업 지점', date:'픽업 예정일', note:'요청사항', item:'상품명', price:'단가', qty:'수량', amt:'금액', total:'합계' }
+    : { title:esc(shop[0]), sub:esc(shop[1] || '訂購單'), no:'訂單編號', name:'護照英文姓名', phone:'聯繫方式', time:'下單時間', pick:'取貨地點', date:'預計取貨日', note:'備註', item:'商品', price:'單價', qty:'數量', amt:'複價', total:'商品總價' };
+  const pctTxt = o.subtotal ? Math.round(o.discount / o.subtotal * 1000) / 10 + '%' : '';
+  return `
+  <div class="os ${ko ? 'ko-mode' : ''}">
+    <div class="top">
+      <div><div class="brand">${L.title}</div><div class="sub">${L.sub}</div></div>
+      <div class="no">${L.no}<b>${esc(o.no)}</b>${esc(o.created)}</div>
+    </div>
+    <div class="meta">
+      <div><span>${L.name}</span>${esc(o.name)}</div>
+      <div><span>${L.phone}</span>${esc(o.contact || '-')}</div>
+      <div class="hl"><span>${L.pick}</span><b class="pick">${esc(pk.name)}</b>${pk.addr ? ` <small>${esc(pk.addr)}</small>` : ''}</div>
+      <div class="hl"><span>${L.date}</span><b>${esc(o.date || '-')}</b></div>
+      ${o.note ? `<div style="grid-column:1/-1"><span>${L.note}</span>${esc(o.note)}</div>` : ''}
+    </div>
+    <table>
+      <thead><tr><th style="width:34px">#</th><th>${L.item}</th><th class="n">${L.price}</th><th class="n">${L.qty}</th><th class="n">${L.amt}</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="sum">
+      ${ko
+        ? `<div><span>총 수량</span><span>${qty}</span></div>
+           <div class="grand"><span>${L.total}</span><b>${won(o.subtotal)}</b></div>`
+        : `<div><span>${L.total}（${qty} 件）</span><span class="won">${won(o.subtotal)}</span></div>
+           ${o.discount > 0 ? `<div class="minus"><span>優惠碼 ${esc(o.coupon)}（${pctTxt}）</span><span class="won">−${won(o.discount)}</span></div>` : ''}
+           <div class="minus"><span>預估退稅</span><span class="won">−${won(o.refund)}</span></div>
+           <div class="grand"><span>預估實際花費</span><b class="won">${won(o.net)}</b></div>`}
+    </div>
+    <div class="note">${ko ? '위 상품의 보관을 부탁드립니다. 결제는 픽업 시 매장에서 진행합니다. 감사합니다.'
+      : `${esc(s.notice || '')}<br>結帳與取貨皆在韓國藥局現場，本訂購單不需線上付款。`}</div>
+  </div>`;
+}
+
+// 把訂購單畫成 canvas（離開畫面渲染）
+async function sheetCanvas(o, s, mode){
+  const holder = document.createElement('div');
+  holder.style.cssText = 'position:fixed;left:-10000px;top:0;';
+  holder.innerHTML = orderSheetHTML(o, s, mode);
+  document.body.appendChild(holder);
+  try { await document.fonts.ready; } catch(e){}
+  const canvas = await html2canvas(holder.firstElementChild, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+  holder.remove();
+  return canvas;
+}
+
+function triggerDownload(url, filename){
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.target = '_blank'; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+// 產出圖片：跳出預覽（手機可長按儲存）＋下載按鈕
+async function exportImage(o, s, mode){
+  toast('產生圖片中…');
+  const c = await sheetCanvas(o, s, mode);
+  const url = c.toDataURL('image/png');
+  showImagePreview(url, `${o.no}${mode === 'pharmacy' ? '_藥局版' : ''}.png`);
+}
+
+async function exportPDF(o, s, mode){
+  toast('產生 PDF 中…');
+  const c = await sheetCanvas(o, s, mode);
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210, H = 297, m = 8;
+  const imgW = W - m * 2, imgH = c.height * imgW / c.width;
+  const img = c.toDataURL('image/jpeg', 0.92);
+  let y = 0;
+  while (y < imgH) {
+    if (y > 0) pdf.addPage();
+    pdf.addImage(img, 'JPEG', m, m - y, imgW, imgH);
+    y += H - m * 2;
+  }
+  const name = `${o.no}${mode === 'pharmacy' ? '_藥局版' : ''}.pdf`;
+  try { pdf.save(name); }
+  catch(e){ window.open(pdf.output('bloburl'), '_blank'); }
+}
+
+function showImagePreview(url, filename){
+  let ov = $('#imgprev');
+  if (!ov){
+    ov = document.createElement('div'); ov.id = 'imgprev';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:90;display:flex;flex-direction:column;align-items:center;padding:16px;overflow:auto';
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML = `
+    <div style="color:#fff;font-size:14px;margin-bottom:10px;text-align:center">手機請<b>長按圖片</b>儲存或分享；電腦按下載</div>
+    <img src="${url}" style="max-width:100%;border-radius:8px;background:#fff">
+    <div style="display:flex;gap:10px;margin:14px 0 30px">
+      <button class="btn" id="ipdl">下載圖片</button>
+      <button class="btn ghost" id="ipclose">關閉</button>
+    </div>`;
+  ov.style.display = 'flex';
+  $('#ipdl', ov).onclick = () => triggerDownload(url, filename);
+  $('#ipclose', ov).onclick = () => { ov.style.display = 'none'; };
+}
+
+// 搜尋用：去掉空白標點、轉小寫
+const norm = s => String(s || '').toLowerCase().replace(/[\s\-_.,，、。・·/()（）]/g, '');
+</script>

@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>熊貓藥局｜後台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --red:#c8102e; --red-d:#9e0b23; --red-soft:#fbeaec;
+  --ink:#1d1a1a; --ink2:#5b5555; --ink3:#948d8d;
+  --line:#ece6e4; --bg:#faf7f5; --card:#fff;
+  --gold:#b88a2e; --green:#1f7a4d;
+  --r:14px; --shadow:0 1px 2px rgba(40,20,20,.06),0 4px 14px rgba(40,20,20,.06);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans TC','Noto Sans KR',system-ui,sans-serif;font-size:15px;line-height:1.5}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:44px;padding:0 18px;border-radius:12px;font-weight:700;background:var(--red);color:#fff;transition:background .15s}
+.btn:active{background:var(--red-d)}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn.block{width:100%}
+.btn.sm{height:34px;padding:0 12px;font-size:13px;border-radius:9px}
+.field{display:block;margin-bottom:12px}
+.field>span{display:block;font-size:13px;color:var(--ink2);margin-bottom:5px;font-weight:500}
+.field input,.field select,.field textarea{width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;background:#fff;outline:none}
+.field textarea{height:auto;min-height:80px;padding:10px 12px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--red)}
+.won{font-variant-numeric:tabular-nums}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:99;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.overlay{position:fixed;inset:0;background:rgba(20,10,10,.45);z-index:50;display:none}
+.overlay.open{display:block}
+.sheetpanel{position:fixed;left:0;right:0;bottom:0;max-height:92vh;background:var(--bg);border-radius:20px 20px 0 0;z-index:51;transform:translateY(105%);transition:transform .25s ease;display:flex;flex-direction:column;max-width:720px;margin:0 auto}
+.sheetpanel.open{transform:none}
+.sheetpanel .hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);font-weight:700;font-size:17px}
+.sheetpanel .bd{overflow:auto;padding:16px 18px;flex:1}
+.sheetpanel .ft{padding:12px 18px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:#fff}
+.x{width:34px;height:34px;border-radius:50%;background:#f1ecea;font-size:18px;line-height:34px}
+.muted{color:var(--ink3);font-size:13px}
+.spin{width:22px;height:22px;border:3px solid var(--red-soft);border-top-color:var(--red);border-radius:50%;animation:sp 0.8s linear infinite;margin:30px auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ===== 訂購單（輸出圖片 / PDF 用，固定寬度） ===== */
+.os{width:760px;background:#fff;color:#1d1a1a;padding:40px 44px;font-family:'Noto Sans TC','Noto Sans KR',sans-serif}
+.os .top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid var(--red);padding-bottom:16px}
+.os .brand{font-size:26px;font-weight:900;color:var(--red);letter-spacing:1px}
+.os .sub{font-size:14px;color:#5b5555;margin-top:2px}
+.os .no{text-align:right;font-size:13px;color:#5b5555}
+.os .no b{display:block;font-size:20px;color:#1d1a1a;letter-spacing:1px}
+.os .meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;margin:18px 0;font-size:15px}
+.os .meta div span{color:#948d8d;margin-right:8px}
+.os .pick{color:var(--red);font-weight:900;font-size:19px;letter-spacing:1px}
+.os .meta .hl{font-size:17px}
+.os table{width:100%;border-collapse:collapse;font-size:14px}
+.os th{background:#f6efed;text-align:left;padding:9px 8px;font-weight:700;border-bottom:1px solid #e3d9d6}
+.os td{padding:9px 8px;border-bottom:1px solid #eee5e2;vertical-align:top}
+.os td.n,.os th.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.os td .ko{color:#948d8d;font-size:12px}
+.os .sum{margin-top:16px;margin-left:auto;width:340px;font-size:15px}
+.os .sum div{display:flex;justify-content:space-between;padding:5px 0}
+.os .sum .minus{color:var(--green)}
+.os .sum .grand{border-top:2px solid #1d1a1a;margin-top:6px;padding-top:10px;font-size:19px;font-weight:900}
+.os .grand b{color:var(--red)}
+.os .note{margin-top:22px;font-size:12px;color:#948d8d;border-top:1px dashed #e3d9d6;padding-top:12px}
+.os.ko-mode .brand{font-family:'Noto Sans KR',sans-serif}
+</style>
+
+<script>
+const $ = (s, el) => (el || document).querySelector(s);
+const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
+const won = n => '₩' + Math.round(n || 0).toLocaleString('en-US');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function toast(msg){
+  let t = $('#toast');
+  if(!t){ t = document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+// 呼叫後端：回傳 Promise，失敗會 reject(Error)
+// 後端：Supabase（資料庫函式），網址與公開金鑰在建置時填入
+const SUPA_URL = 'https://lwchkokwkhoonuwzelht.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3Y2hrb2t3a2hvb251d3plbGh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUwNTEwNzMsImV4cCI6MjExMDYyNzA3M30.lSe3dDBjwSjHygUDsUVsiv6rbFUZXXyDgbOyJAo2qyc';
+function api(fn, ...args){
+  return fetch(`${SUPA_URL}/rest/v1/rpc/${fn.toLowerCase()}`, {
+    method:'POST',
+    headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer ' + SUPA_KEY, 'Content-Type':'application/json' },
+    body: JSON.stringify({ args })
+  }).catch(() => { throw new Error('連線失敗，請檢查網路後再試'); })
+    .then(r => r.json().catch(() => ({})).then(j => {
+      if (j && j.ok) return j.data;
+      throw new Error(j && j.error ? j.error : (j && j.message ? '系統錯誤：' + j.message : '連線失敗，請稍後再試'));
+    }));
+}
+// 上傳商品照片到 Supabase Storage，回傳公開網址
+async function uploadImage(blob, name){
+  const path = `p/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+  const r = await fetch(`${SUPA_URL}/storage/v1/object/product-images/${path}`, {
+    method:'POST', headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer ' + SUPA_KEY, 'Content-Type':'image/jpeg', 'x-upsert':'false' }, body: blob });
+  if (!r.ok) throw new Error('照片上傳失敗（' + r.status + '）');
+  return `${SUPA_URL}/storage/v1/object/public/product-images/${path}`;
+}
+
+// 金額計算：和 Code.gs 的 totals_ 同一套
+function refundFor(total, s){
+  if (total >= s.refundAboveFrom) return Math.floor(total * s.refundAbovePct / 100) * 100;
+  let r = 0; (s.refundTable || []).forEach(row => { if (total >= row[0]) r = row[1]; });
+  return r;
+}
+function totals(subtotal, s, rate){
+  const discount = Math.round(subtotal * (rate > 0 ? rate : 0));
+  const refund = refundFor(subtotal, s);
+  return { subtotal, discount, refund, net: subtotal - discount - refund };
+}
+// 距離下一個退稅級距還差多少
+function nextBracket(total, s){
+  if (total >= s.refundAboveFrom) return null;
+  const rows = (s.refundTable || []).filter(r => r[0] > total);
+  if (!rows.length) return null;
+  return { need: rows[0][0] - total, refund: rows[0][1] };
+}
+
+// 訂購單 HTML。mode: 'customer'（中文、含優惠退稅）或 'pharmacy'（韓文、給藥局老闆）
+function orderSheetHTML(o, s, mode){
+  const ko = mode === 'pharmacy';
+  const shop = String(s.shopName || '熊貓藥局 Panda Pharmacy｜臺灣客人專屬訂購網頁').split('｜');
+  const pk = (s.pickups || []).find(p => p.name === o.pickup) || { name: o.pickup, addr: '' };
+  const rows = o.items.map((it, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${ko ? `<b>${esc(it.nameKo || it.name)}</b>${it.nameKo ? `<div class="ko">${esc(it.name)}</div>` : ''}`
+               : `<b>${esc(it.name)}</b>${it.brand ? `<div class="ko">${esc(it.brand)}${it.nameKo ? '・' + esc(it.nameKo) : ''}</div>` : ''}`}</td>
+      <td class="n">${won(it.price)}</td>
+      <td class="n">${it.qty}</td>
+      <td class="n">${won(it.amount)}</td>
+    </tr>`).join('');
+  const qty = o.items.reduce((a, b) => a + b.qty, 0);
+  const L = ko
+    ? { title:'약국 예약 주문서', sub:'대만 고객 주문 · 상품 보관 요청', no:'주문번호', name:'고객명 (여권 영문)', phone:'연락처', time:'주문일시', pick:'픽업 지점', date:'픽업 예정일', note:'요청사항', item:'상품명', price:'단가', qty:'수량', amt:'금액', total:'합계' }
+    : { title:esc(shop[0]), sub:esc(shop[1] || '訂購單'), no:'訂單編號', name:'護照英文姓名', phone:'聯繫方式', time:'下單時間', pick:'取貨地點', date:'預計取貨日', note:'備註', item:'商品', price:'單價', qty:'數量', amt:'複價', total:'商品總價' };
+  const pctTxt = o.subtotal ? Math.round(o.discount / o.subtotal * 1000) / 10 + '%' : '';
+  return `
+  <div class="os ${ko ? 'ko-mode' : ''}">
+    <div class="top">
+      <div><div class="brand">${L.title}</div><div class="sub">${L.sub}</div></div>
+      <div class="no">${L.no}<b>${esc(o.no)}</b>${esc(o.created)}</div>
+    </div>
+    <div class="meta">
+      <div><span>${L.name}</span>${esc(o.name)}</div>
+      <div><span>${L.phone}</span>${esc(o.contact || '-')}</div>
+      <div class="hl"><span>${L.pick}</span><b class="pick">${esc(pk.name)}</b>${pk.addr ? ` <small>${esc(pk.addr)}</small>` : ''}</div>
+      <div class="hl"><span>${L.date}</span><b>${esc(o.date || '-')}</b></div>
+      ${o.note ? `<div style="grid-column:1/-1"><span>${L.note}</span>${esc(o.note)}</div>` : ''}
+    </div>
+    <table>
+      <thead><tr><th style="width:34px">#</th><th>${L.item}</th><th class="n">${L.price}</th><th class="n">${L.qty}</th><th class="n">${L.amt}</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="sum">
+      ${ko
+        ? `<div><span>총 수량</span><span>${qty}</span></div>
+           <div class="grand"><span>${L.total}</span><b>${won(o.subtotal)}</b></div>`
+        : `<div><span>${L.total}（${qty} 件）</span><span class="won">${won(o.subtotal)}</span></div>
+           ${o.discount > 0 ? `<div class="minus"><span>優惠碼 ${esc(o.coupon)}（${pctTxt}）</span><span class="won">−${won(o.discount)}</span></div>` : ''}
+           <div class="minus"><span>預估退稅</span><span class="won">−${won(o.refund)}</span></div>
+           <div class="grand"><span>預估實際花費</span><b class="won">${won(o.net)}</b></div>`}
+    </div>
+    <div class="note">${ko ? '위 상품의 보관을 부탁드립니다. 결제는 픽업 시 매장에서 진행합니다. 감사합니다.'
+      : `${esc(s.notice || '')}<br>結帳與取貨皆在韓國藥局現場，本訂購單不需線上付款。`}</div>
+  </div>`;
+}
+
+// 把訂購單畫成 canvas（離開畫面渲染）
+async function sheetCanvas(o, s, mode){
+  const holder = document.createElement('div');
+  holder.style.cssText = 'position:fixed;left:-10000px;top:0;';
+  holder.innerHTML = orderSheetHTML(o, s, mode);
+  document.body.appendChild(holder);
+  try { await document.fonts.ready; } catch(e){}
+  const canvas = await html2canvas(holder.firstElementChild, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+  holder.remove();
+  return canvas;
+}
+
+function triggerDownload(url, filename){
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.target = '_blank'; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+// 產出圖片：跳出預覽（手機可長按儲存）＋下載按鈕
+async function exportImage(o, s, mode){
+  toast('產生圖片中…');
+  const c = await sheetCanvas(o, s, mode);
+  const url = c.toDataURL('image/png');
+  showImagePreview(url, `${o.no}${mode === 'pharmacy' ? '_藥局版' : ''}.png`);
+}
+
+async function exportPDF(o, s, mode){
+  toast('產生 PDF 中…');
+  const c = await sheetCanvas(o, s, mode);
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210, H = 297, m = 8;
+  const imgW = W - m * 2, imgH = c.height * imgW / c.width;
+  const img = c.toDataURL('image/jpeg', 0.92);
+  let y = 0;
+  while (y < imgH) {
+    if (y > 0) pdf.addPage();
+    pdf.addImage(img, 'JPEG', m, m - y, imgW, imgH);
+    y += H - m * 2;
+  }
+  const name = `${o.no}${mode === 'pharmacy' ? '_藥局版' : ''}.pdf`;
+  try { pdf.save(name); }
+  catch(e){ window.open(pdf.output('bloburl'), '_blank'); }
+}
+
+function showImagePreview(url, filename){
+  let ov = $('#imgprev');
+  if (!ov){
+    ov = document.createElement('div'); ov.id = 'imgprev';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:90;display:flex;flex-direction:column;align-items:center;padding:16px;overflow:auto';
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML = `
+    <div style="color:#fff;font-size:14px;margin-bottom:10px;text-align:center">手機請<b>長按圖片</b>儲存或分享；電腦按下載</div>
+    <img src="${url}" style="max-width:100%;border-radius:8px;background:#fff">
+    <div style="display:flex;gap:10px;margin:14px 0 30px">
+      <button class="btn" id="ipdl">下載圖片</button>
+      <button class="btn ghost" id="ipclose">關閉</button>
+    </div>`;
+  ov.style.display = 'flex';
+  $('#ipdl', ov).onclick = () => triggerDownload(url, filename);
+  $('#ipclose', ov).onclick = () => { ov.style.display = 'none'; };
+}
+
+// 搜尋用：去掉空白標點、轉小寫
+const norm = s => String(s || '').toLowerCase().replace(/[\s\-_.,，、。・·/()（）]/g, '');
+</script>
+
+<style>
+body{background:#f4f1ef}
+.adm-top{background:#1d1a1a;color:#fff;position:sticky;top:0;z-index:20}
+.adm-top .in{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:0 16px;height:56px}
+.adm-top .lg{font-weight:900;font-size:17px;flex:1}
+.adm-top .lg span{color:#ff8a9a}
+.tabs{display:flex;gap:4px}
+.tabs button{height:36px;padding:0 14px;border-radius:9px;color:#cfc8c6;font-weight:700}
+.tabs button.on{background:#fff;color:#1d1a1a}
+.wrap{max-width:1100px;margin:0 auto;padding:18px 16px 80px}
+.login{max-width:340px;margin:12vh auto;background:#fff;border-radius:16px;padding:26px;box-shadow:var(--shadow)}
+.login h1{margin:0 0 16px;font-size:20px;color:var(--red)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.toolbar input,.toolbar select{height:38px;border:1px solid var(--line);border-radius:9px;padding:0 10px;background:#fff}
+.toolbar input{flex:1;min-width:160px}
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.stat{background:#fff;border-radius:10px;padding:8px 14px;box-shadow:var(--shadow);font-size:13px;color:var(--ink2)}
+.stat b{font-size:18px;color:var(--ink);margin-left:4px}
+.ord{background:#fff;border-radius:12px;box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden}
+.ord .h{display:grid;grid-template-columns:1.3fr 1fr .8fr 1fr auto;gap:10px;align-items:center;padding:12px 14px;cursor:pointer}
+@media(max-width:700px){.ord .h{grid-template-columns:1fr auto}.ord .h .hide-m{display:none}}
+.ord .h b{display:block}
+.ord .d{border-top:1px solid var(--line);padding:12px 14px;display:none;background:#fcfaf9}
+.ord.open .d{display:block}
+.ord table{width:100%;border-collapse:collapse;font-size:13.5px;margin-bottom:10px}
+.ord td,.ord th{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left}
+.ord .n{text-align:right;white-space:nowrap}
+.acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.st{font-size:12px;padding:3px 9px;border-radius:6px;font-weight:700;border:0;height:28px}
+.st.新訂單{background:#fff1d6;color:#8a5a00}.st.已傳藥局{background:#e3edff;color:#24489c}.st.已留貨{background:#e2f4ea;color:var(--green)}.st.已取貨{background:#ececec;color:#555}.st.已取消{background:#fbe3e3;color:#a11}
+.pk{display:inline-block;color:var(--red);font-size:14px;font-weight:900}
+.flt{background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:14px;margin-bottom:12px}
+.flt .r{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.flt .r+.r{margin-top:10px}
+.flt input,.flt select{height:38px;border:1px solid var(--line);border-radius:9px;padding:0 10px;background:#fff}
+.flt input[type=search]{flex:1;min-width:180px}
+.flt .lb{font-size:13px;color:var(--ink2);font-weight:700}
+.seg2{display:inline-flex;background:#efe9e7;border-radius:9px;padding:3px}
+.seg2 button{height:32px;padding:0 12px;border-radius:7px;font-size:13px;font-weight:700;color:var(--ink2)}
+.seg2 button.on{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
+.qk{height:32px;padding:0 11px;border-radius:16px;border:1px solid var(--line);background:#fff;font-size:13px}
+.qk.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.rep{background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:14px;margin-bottom:14px}
+.rep .hd2{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.rep .hd2 b{font-size:16px}
+.kp{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+@media(max-width:800px){.kp{grid-template-columns:repeat(3,1fr)}}
+.kp div{background:#faf7f5;border-radius:10px;padding:9px 11px}
+.kp span{display:block;font-size:12px;color:var(--ink3)}
+.kp b{font-size:17px;font-variant-numeric:tabular-nums}
+.kp .main{background:var(--red-soft)}
+.kp .main b{color:var(--red)}
+.brk{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;font-size:13px}
+.brk span{background:#f4f1ef;border-radius:8px;padding:4px 10px}
+.brk button{background:#f4f1ef;border-radius:8px;padding:4px 10px;font-size:13px}
+.brk button.on{background:var(--ink);color:#fff}
+.itbl{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px}
+.itbl th,.itbl td{padding:6px;border-bottom:1px solid var(--line);text-align:left}
+.itbl .n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.prow{display:flex;gap:12px;align-items:center;background:#fff;border-radius:12px;box-shadow:var(--shadow);padding:10px 12px;margin-bottom:8px}
+.prow .th{width:54px;height:54px;border-radius:9px;background:#f1ecea center/cover;flex:none}
+.prow .inf{flex:1;min-width:0}
+.prow .inf b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .cats{font-size:12px;color:var(--ink3)}
+.prow.off{opacity:.5}
+.sw{position:relative;width:44px;height:26px;flex:none}
+.sw input{opacity:0;width:0;height:0}
+.sw span{position:absolute;inset:0;background:#d8d2d0;border-radius:13px;transition:.2s}
+.sw span:before{content:'';position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.sw input:checked+span{background:var(--green)}
+.sw input:checked+span:before{transform:translateX(18px)}
+.catbox{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.catbox label{display:flex;align-items:center;gap:5px;padding:6px 11px;border:1px solid var(--line);border-radius:18px;background:#fff;font-size:13.5px;cursor:pointer}
+.catbox input{accent-color:var(--red)}
+.catbox label:has(input:checked){border-color:var(--red);background:var(--red-soft)}
+.imgprev{width:120px;height:120px;border-radius:12px;background:#f1ecea center/cover;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.card2{background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:18px;margin-bottom:14px}
+.card2 h3{margin:0 0 12px;font-size:16px}
+.sheetwrap{background:#fff;border-radius:10px;overflow:hidden}
+.sheetwrap .scaler{transform-origin:top left}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="overlay" id="ov"></div>
+<div class="sheetpanel" id="panel">
+  <div class="hd"><span id="pTitle"></span><button class="x" id="pClose">×</button></div>
+  <div class="bd" id="pBody"></div>
+  <div class="ft" id="pFoot"></div>
+</div>
+
+<script>
+const A = { t:null, settings:null, products:[], orders:[], statuses:[], tab:'orders', fStatus:'', fPick:'', fQ:'', openNo:null,
+  dBy:'created', dFrom:'', dTo:'', showItems:false };
+const ls = {
+  get(k){ try{ return sessionStorage.getItem(k); }catch(e){ return null; } },
+  set(k, v){ try{ sessionStorage.setItem(k, v); }catch(e){} },
+  del(k){ try{ sessionStorage.removeItem(k); }catch(e){} }
+};
+
+function openPanel(title, body, foot){
+  $('#pTitle').textContent = title; $('#pBody').innerHTML = body;
+  $('#pFoot').innerHTML = foot || ''; $('#pFoot').style.display = foot ? '' : 'none';
+  $('#ov').classList.add('open'); $('#panel').classList.add('open');
+}
+function closePanel(){ $('#ov').classList.remove('open'); $('#panel').classList.remove('open'); }
+$('#ov').onclick = $('#pClose').onclick = closePanel;
+
+async function call(fn, ...args){
+  try{ return await api(fn, A.t, ...args); }
+  catch(e){
+    if (e.message === 'LOGIN'){ A.t = null; ls.del('cb_adm'); renderLogin('登入逾時，請重新登入'); }
+    throw e;
+  }
+}
+
+// ---------- 登入 ----------
+function renderLogin(msg){
+  $('#app').innerHTML = `
+  <div class="login">
+    <h1>熊貓藥局｜後台</h1>
+    <label class="field"><span>管理密碼</span><input id="lp" type="password" autocomplete="current-password"></label>
+    <div id="le" style="color:var(--red);font-size:13px;min-height:20px">${esc(msg || '')}</div>
+    <button class="btn block" id="lb">登入</button>
+    <button class="btn ghost block" id="lc" style="margin-top:8px">更換／設定管理密碼</button>
+  </div>`;
+  const go = async () => {
+    $('#lb').disabled = true;
+    try{ const r = await api('admin_login', $('#lp').value); A.t = r.token; ls.set('cb_adm', r.token); await load(); }
+    catch(e){
+      if (e.message === 'NEED_SETUP') return renderPwSetup(true);
+      $('#le').textContent = e.message; $('#lb').disabled = false;
+    }
+  };
+  $('#lb').onclick = go; $('#lp').onkeydown = e => { if (e.key === 'Enter') go(); };
+  $('#lc').onclick = () => renderPwSetup(false);
+}
+
+// 設定或更換管理密碼（第一次用「設定碼」，之後用舊密碼）
+function renderPwSetup(first){
+  $('#app').innerHTML = `
+  <div class="login">
+    <h1>${first ? '設定管理密碼' : '更換管理密碼'}</h1>
+    <label class="field"><span>${first ? '設定碼（Claude 提供）' : '目前的密碼'}</span><input id="sp0" type="password" autocomplete="${first ? 'one-time-code' : 'current-password'}"></label>
+    <label class="field"><span>新密碼（至少 8 碼）</span><input id="sp1" type="password" autocomplete="new-password"></label>
+    <label class="field"><span>再輸入一次新密碼</span><input id="sp2" type="password" autocomplete="new-password"></label>
+    <div id="se" style="color:var(--red);font-size:13px;min-height:20px"></div>
+    <button class="btn block" id="sb">儲存新密碼</button>
+    <button class="btn ghost block" id="sx" style="margin-top:8px">返回登入</button>
+  </div>`;
+  $('#sx').onclick = () => renderLogin();
+  $('#sb').onclick = async () => {
+    if ($('#sp1').value !== $('#sp2').value) return $('#se').textContent = '兩次輸入的新密碼不一樣';
+    $('#sb').disabled = true;
+    try{ await api('admin_setPassword', $('#sp0').value, $('#sp1').value); renderLogin('密碼已設定，請用新密碼登入'); }
+    catch(e){ $('#se').textContent = e.message; $('#sb').disabled = false; }
+  };
+}
+
+async function load(){
+  $('#app').innerHTML = '<div class="spin"></div>';
+  try{
+    const d = await call('admin_bootstrap');
+    Object.assign(A, d);
+    renderShell();
+  }catch(e){ if (e.message !== 'LOGIN') $('#app').innerHTML = `<div class="wrap">讀取失敗：${esc(e.message)}</div>`; }
+}
+
+(function init(){ A.t = ls.get('cb_adm'); A.t ? load() : renderLogin(); })();
+
+function renderShell(){
+  const newCount = A.orders.filter(o => o.status === '新訂單').length;
+  $('#app').innerHTML = `
+  <div class="adm-top"><div class="in">
+    <div class="lg">熊貓藥局 <span>後台</span></div>
+    <div class="tabs">
+      <button data-tab="orders" class="${A.tab === 'orders' ? 'on' : ''}">訂單${newCount ? ` (${newCount})` : ''}</button>
+      <button data-tab="products" class="${A.tab === 'products' ? 'on' : ''}">商品</button>
+      <button data-tab="settings" class="${A.tab === 'settings' ? 'on' : ''}">設定</button>
+    </div>
+  </div></div>
+  <div class="wrap" id="view"></div>`;
+  $$('[data-tab]').forEach(b => b.onclick = () => { A.tab = b.dataset.tab; renderShell(); });
+  ({ orders:renderOrders, products:renderProducts, settings:renderSettings })[A.tab]();
+}
+
+// ================= 訂單 =================
+const pad2 = n => String(n).padStart(2, '0');
+const dstr = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+function quickRange(k){
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const add = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  if (k === 'today') return [dstr(t), dstr(t)];
+  if (k === 'tomorrow') return [dstr(add(t, 1)), dstr(add(t, 1))];
+  if (k === 'week'){ const mon = add(t, -((t.getDay() + 6) % 7)); return [dstr(mon), dstr(add(mon, 6))]; }
+  if (k === 'month') return [dstr(new Date(t.getFullYear(), t.getMonth(), 1)), dstr(new Date(t.getFullYear(), t.getMonth() + 1, 0))];
+  return ['', ''];
+}
+function activeQuick(){
+  for (const k of ['today', 'tomorrow', 'week', 'month', 'all']){
+    const [a, b] = quickRange(k); if (a === A.dFrom && b === A.dTo) return k;
+  }
+  return '';
+}
+const dayOf = o => A.dBy === 'pickup' ? o.date : o.createdDay;
+function inDate(o){
+  const d = dayOf(o);
+  if (A.dFrom && (!d || d < A.dFrom)) return false;
+  if (A.dTo && (!d || d > A.dTo)) return false;
+  return true;
+}
+function inStatus(o){
+  if (A.fStatus === '') return o.status !== '已取消';
+  if (A.fStatus === 'ALL') return true;
+  return o.status === A.fStatus;
+}
+function filtered(skipStatus){
+  const q = norm(A.fQ);
+  return A.orders.filter(o => inDate(o) && (!A.fPick || o.pickup === A.fPick) && (skipStatus || inStatus(o)) &&
+    (!q || norm([o.no, o.name, o.contact, o.coupon, ...o.items.map(i => i.name + i.nameKo)].join(' ')).includes(q)));
+}
+
+function renderOrders(){
+  const v = $('#view');
+  const qk = activeQuick();
+  v.innerHTML = `
+    <div class="flt">
+      <div class="r">
+        <span class="lb">日期依據</span>
+        <div class="seg2"><button data-by="created" class="${A.dBy === 'created' ? 'on' : ''}">下單日</button><button data-by="pickup" class="${A.dBy === 'pickup' ? 'on' : ''}">取貨日</button></div>
+        <input type="date" id="dF" value="${A.dFrom}"><span class="muted">到</span><input type="date" id="dT" value="${A.dTo}">
+        ${[['today', '今天'], ['tomorrow', '明天'], ['week', '本週'], ['month', '本月'], ['all', '全部']].map(([k, t]) => `<button class="qk ${qk === k ? 'on' : ''}" data-qk="${k}">${t}</button>`).join('')}
+      </div>
+      <div class="r">
+        <select id="fs">
+          <option value="" ${A.fStatus === '' ? 'selected' : ''}>全部狀態（不含已取消）</option>
+          ${A.statuses.map(s => `<option ${A.fStatus === s ? 'selected' : ''}>${s}</option>`).join('')}
+          <option value="ALL" ${A.fStatus === 'ALL' ? 'selected' : ''}>全部（含已取消）</option>
+        </select>
+        <select id="fp"><option value="">全部取貨點</option>${A.settings.pickups.map(p => `<option ${A.fPick === p.name ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
+        <input type="search" id="fq" placeholder="搜尋訂單編號、姓名、LINE/微信、商品" value="${esc(A.fQ)}">
+        <button class="btn ghost sm" id="rf">重新整理</button>
+      </div>
+    </div>
+    <div class="rep" id="rep"></div>
+    <div id="olist"></div>`;
+  $$('[data-by]').forEach(b => b.onclick = () => { A.dBy = b.dataset.by; renderOrders(); });
+  $$('[data-qk]').forEach(b => b.onclick = () => { [A.dFrom, A.dTo] = quickRange(b.dataset.qk); renderOrders(); });
+  $('#dF').onchange = e => { A.dFrom = e.target.value; if (A.dTo && A.dFrom > A.dTo) A.dTo = A.dFrom; renderOrders(); };
+  $('#dT').onchange = e => { A.dTo = e.target.value; if (A.dFrom && A.dTo < A.dFrom) A.dFrom = A.dTo; renderOrders(); };
+  $('#fq').oninput = e => { A.fQ = e.target.value; drawOrders(); };
+  $('#fs').onchange = e => { A.fStatus = e.target.value; drawOrders(); };
+  $('#fp').onchange = e => { A.fPick = e.target.value; drawOrders(); };
+  $('#rf').onclick = load;
+  drawOrders();
+}
+
+function itemSummary(list){
+  const m = {};
+  list.forEach(o => o.items.forEach(i => {
+    const k = i.id || i.name;
+    m[k] = m[k] || { name:i.name, nameKo:i.nameKo, price:i.price, qty:0, amount:0, orders:0 };
+    m[k].qty += i.qty; m[k].amount += i.amount; m[k].orders += 1;
+  }));
+  return Object.values(m).sort((a, b) => b.qty - a.qty);
+}
+
+function drawStats(){
+  const list = filtered(), sum = k => list.reduce((a, o) => a + (k === 'qty' ? o.items.reduce((x, i) => x + i.qty, 0) : o[k]), 0);
+  const range = A.dFrom || A.dTo ? `${A.dFrom || '最早'} ～ ${A.dTo || '最新'}` : '全部日期';
+  const statusTxt = A.fStatus === '' ? '不含已取消' : A.fStatus === 'ALL' ? '含已取消' : A.fStatus;
+  const base = filtered(true);
+  const byPick = A.settings.pickups.map(p => { const l = list.filter(o => o.pickup === p.name); return `<span>${esc(p.name)}：${l.length} 筆・${won(l.reduce((a, o) => a + o.subtotal, 0))}</span>`; }).join('');
+  const bySt = A.statuses.map(s => { const n = base.filter(o => o.status === s).length; return `<button data-sf="${s}" class="${A.fStatus === s ? 'on' : ''}">${s} ${n}</button>`; }).join('');
+  const items = A.showItems ? itemSummary(list) : [];
+  $('#rep').innerHTML = `
+    <div class="hd2"><b>報表</b><span class="muted">${A.dBy === 'pickup' ? '依取貨日' : '依下單日'}・${range}・${esc(A.fPick || '全部取貨點')}・${statusTxt}</span></div>
+    <div class="kp">
+      <div><span>訂單數</span><b>${list.length}</b></div>
+      <div><span>商品件數</span><b>${sum('qty')}</b></div>
+      <div class="main"><span>商品總額</span><b>${won(sum('subtotal'))}</b></div>
+      <div><span>優惠碼折扣</span><b>${won(sum('discount'))}</b></div>
+      <div><span>預估退稅</span><b>${won(sum('refund'))}</b></div>
+      <div><span>預估實付</span><b>${won(sum('net'))}</b></div>
+    </div>
+    <div class="brk">${byPick}</div>
+    <div class="brk"><span class="muted" style="background:none;padding-left:0">狀態：</span>${bySt}</div>
+    <div class="acts" style="margin-top:12px">
+      <button class="btn ghost sm" id="tgItems">${A.showItems ? '收起' : '查看'}商品彙總（備貨用）</button>
+      <button class="btn ghost sm" id="csvO">匯出訂單 CSV</button>
+      <button class="btn ghost sm" id="csvI">匯出商品彙總 CSV</button>
+    </div>
+    ${A.showItems ? (items.length ? `<table class="itbl"><tr><th>商品</th><th>韓文名稱</th><th class="n">單價</th><th class="n">總數量</th><th class="n">總額</th></tr>
+      ${items.map(i => `<tr><td>${esc(i.name)}</td><td>${esc(i.nameKo)}</td><td class="n">${won(i.price)}</td><td class="n"><b>${i.qty}</b></td><td class="n">${won(i.amount)}</td></tr>`).join('')}</table>` : '<div class="muted" style="margin-top:10px">沒有資料</div>') : ''}`;
+  $$('[data-sf]').forEach(b => b.onclick = () => { A.fStatus = A.fStatus === b.dataset.sf ? '' : b.dataset.sf; $('#fs').value = A.fStatus; drawOrders(); });
+  $('#tgItems').onclick = () => { A.showItems = !A.showItems; drawStats(); };
+  const tag = `${A.dFrom || 'all'}_${A.dTo || 'all'}${A.fPick ? '_' + A.fPick : ''}`;
+  $('#csvO').onclick = () => exportCSV(`訂單_${tag}.csv`, [
+    ['訂單編號', '下單時間', '護照英文姓名', '聯繫方式', '取貨地點', '預計取貨日', '狀態', '品項數', '件數', '商品總額', '優惠碼', '優惠折扣', '預估退稅', '預估實付', '備註', '明細'],
+    ...list.map(o => [o.no, o.created, o.name, o.contact, o.pickup, o.date, o.status, o.items.length, o.items.reduce((a, i) => a + i.qty, 0),
+      o.subtotal, o.coupon, o.discount, o.refund, o.net, o.note, o.items.map(i => `${i.name}×${i.qty}`).join('、')])
+  ]);
+  $('#csvI').onclick = () => exportCSV(`商品彙總_${tag}.csv`, [
+    ['商品', '韓文名稱', '單價', '總數量', '總額', '出現訂單數'],
+    ...itemSummary(list).map(i => [i.name, i.nameKo, i.price, i.qty, i.amount, i.orders])
+  ]);
+}
+
+function exportCSV(filename, rows){
+  const csv = '﻿' + rows.map(r => r.map(v => { const t = String(v == null ? '' : v); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }).join(',')).join('\r\n');
+  try{
+    const url = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8' }));
+    triggerDownload(url, filename);
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  }catch(e){}
+  // 備用：有些瀏覽器擋下載，提供可複製的表格
+  const tsv = rows.map(r => r.map(v => String(v == null ? '' : v).replace(/[\t\n]/g, ' ')).join('\t')).join('\n');
+  openPanel(filename, `
+    <div class="muted" style="margin-bottom:8px">如果沒有自動下載：按「複製」後，直接貼到 Excel 或 Google 試算表。</div>
+    <textarea id="tsv" style="width:100%;height:50vh;font-size:12px;border:1px solid var(--line);border-radius:10px;padding:8px" readonly>${esc(tsv)}</textarea>`,
+    `<button class="btn block" id="cpy">複製</button>`);
+  $('#cpy').onclick = async () => {
+    const ta = $('#tsv'); ta.select();
+    try{ await navigator.clipboard.writeText(ta.value); toast('已複製'); }
+    catch(e){ try{ document.execCommand('copy'); toast('已複製'); }catch(e2){ toast('請手動全選複製'); } }
+  };
+}
+
+function drawOrders(){
+  drawStats();
+  const list = filtered();
+  $('#olist').innerHTML = list.length ? list.map(o => `
+    <div class="ord ${A.openNo === o.no ? 'open' : ''}" data-no="${esc(o.no)}">
+      <div class="h" data-tg="${esc(o.no)}">
+        <div><b>${esc(o.no)}</b><span class="muted">${esc(o.created)}</span></div>
+        <div class="hide-m"><b>${esc(o.name)}</b><span class="muted">${esc(o.contact || '-')}</span></div>
+        <div class="hide-m"><span class="pk">${esc(o.pickup)}</span><div class="muted">取貨 ${esc(o.date || '未填')}</div></div>
+        <div class="hide-m"><b class="won">${won(o.subtotal)}</b><span class="muted">${o.items.length} 項${o.coupon ? '・' + esc(o.coupon) : ''}</span></div>
+        <select class="st ${esc(o.status)}" data-st="${esc(o.no)}">${A.statuses.map(s => `<option ${s === o.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
+      </div>
+      <div class="d">
+        <table>
+          <tr><th>商品</th><th>韓文名稱</th><th class="n">單價</th><th class="n">數量</th><th class="n">複價</th></tr>
+          ${o.items.map(i => `<tr><td>${esc(i.name)}</td><td>${esc(i.nameKo)}</td><td class="n">${won(i.price)}</td><td class="n">${i.qty}</td><td class="n">${won(i.amount)}</td></tr>`).join('')}
+          <tr><td colspan="4">商品總價／優惠碼${o.coupon ? ' ' + esc(o.coupon) : '（無）'}／預估退稅／預估實付</td><td class="n">${won(o.subtotal)}<br>−${won(o.discount)}<br>−${won(o.refund)}<br><b>${won(o.net)}</b></td></tr>
+        </table>
+        ${o.note ? `<div style="margin-bottom:10px"><span class="muted">備註：</span>${esc(o.note)}</div>` : ''}
+        <div class="acts">
+          <button class="btn sm" data-x="ph-img">藥局版圖片</button>
+          <button class="btn ghost sm" data-x="ph-pdf">藥局版 PDF</button>
+          <button class="btn ghost sm" data-x="cu-img">客人版圖片</button>
+          <button class="btn ghost sm" data-x="cu-pdf">客人版 PDF</button>
+          <button class="btn ghost sm" data-x="view">預覽</button>
+        </div>
+      </div>
+    </div>`).join('') : `<div class="empty muted" style="text-align:center;padding:40px">沒有符合的訂單</div>`;
+
+  $$('[data-tg]').forEach(h => h.onclick = e => {
+    if (e.target.closest('select')) return;
+    A.openNo = A.openNo === h.dataset.tg ? null : h.dataset.tg; drawOrders();
+  });
+  $$('[data-st]').forEach(sel => sel.onchange = async () => {
+    const o = A.orders.find(x => x.no === sel.dataset.st), prev = o.status;
+    o.status = sel.value; sel.className = 'st ' + sel.value;
+    try{ await call('admin_setStatus', o.no, sel.value); toast(`${o.no} → ${sel.value}`); drawOrders(); }
+    catch(e){ o.status = prev; toast(e.message); drawOrders(); }
+  });
+  $$('[data-x]').forEach(b => b.onclick = () => {
+    const o = A.orders.find(x => x.no === b.closest('.ord').dataset.no), s = A.settings, k = b.dataset.x;
+    const fail = e => toast('產生失敗：' + e.message);
+    if (k === 'ph-img') exportImage(o, s, 'pharmacy').catch(fail);
+    if (k === 'ph-pdf') exportPDF(o, s, 'pharmacy').catch(fail);
+    if (k === 'cu-img') exportImage(o, s, 'customer').catch(fail);
+    if (k === 'cu-pdf') exportPDF(o, s, 'customer').catch(fail);
+    if (k === 'view') previewOrder(o, 'pharmacy');
+  });
+}
+
+function previewOrder(o, mode){
+  openPanel(o.no, `
+    <div class="toolbar"><button class="btn sm ${mode === 'pharmacy' ? '' : 'ghost'}" id="pvP">藥局版（韓文）</button><button class="btn sm ${mode === 'customer' ? '' : 'ghost'}" id="pvC">客人版</button></div>
+    <div class="sheetwrap"><div class="scaler">${orderSheetHTML(o, A.settings, mode)}</div></div>`);
+  const w = $('.sheetwrap'), sc = $('.scaler'), k = Math.min(1, w.clientWidth / 760);
+  sc.style.transform = `scale(${k})`; w.style.height = sc.firstElementChild.offsetHeight * k + 'px';
+  $('#pvP').onclick = () => previewOrder(o, 'pharmacy');
+  $('#pvC').onclick = () => previewOrder(o, 'customer');
+}
+
+// ================= 商品 =================
+function renderProducts(){
+  const v = $('#view');
+  v.innerHTML = `
+    <div class="toolbar">
+      <input id="pq" placeholder="搜尋商品">
+      <button class="btn sm" id="padd">＋ 新增商品</button>
+    </div>
+    <div class="muted" style="margin-bottom:10px">共 ${A.products.length} 項，上架 ${A.products.filter(p => p.active).length} 項。排序數字越小越前面。</div>
+    <div id="plist"></div>`;
+  $('#padd').onclick = () => editProduct();
+  $('#pq').oninput = drawProducts;
+  drawProducts();
+}
+function drawProducts(){
+  const q = norm($('#pq') ? $('#pq').value : '');
+  const list = A.products.filter(p => !q || norm([p.name, p.nameKo, p.brand, ...p.cats].join(' ')).includes(q));
+  $('#plist').innerHTML = list.map(p => `
+    <div class="prow ${p.active ? '' : 'off'}">
+      <div class="th" style="${p.img ? `background-image:url('${esc(p.img)}')` : ''}"></div>
+      <div class="inf"><b>${esc(p.name)}</b><span class="won">${won(p.price)}</span>${p.brand ? ` ・ <span class="muted">${esc(p.brand)}</span>` : ''}<div class="cats">${esc(p.cats.join('、') || '未分類')}</div></div>
+      <label class="sw" title="上架"><input type="checkbox" data-act="${p.id}" ${p.active ? 'checked' : ''}><span></span></label>
+      <button class="btn ghost sm" data-ed="${p.id}">編輯</button>
+    </div>`).join('') || `<div class="muted" style="text-align:center;padding:40px">還沒有商品，按「新增商品」開始上架</div>`;
+  $$('[data-ed]').forEach(b => b.onclick = () => editProduct(A.products.find(p => p.id === b.dataset.ed)));
+  $$('[data-act]').forEach(c => c.onchange = async () => {
+    const p = A.products.find(x => x.id === c.dataset.act);
+    p.active = c.checked;
+    try{ await call('admin_saveProduct', p); toast(p.active ? '已上架' : '已下架'); drawProducts(); }
+    catch(e){ p.active = !c.checked; toast(e.message); drawProducts(); }
+  });
+}
+
+function editProduct(p){
+  p = p || { id:'', name:'', nameKo:'', brand:'', price:'', cats:[], img:'', desc:'', keywords:'', sort:(A.products.length + 1) * 10, active:true };
+  const s = A.settings;
+  const catBox = (title, list) => `<div class="field"><span>${title}</span><div class="catbox">${list.map(c =>
+    `<label><input type="checkbox" value="${esc(c)}" ${p.cats.includes(c) ? 'checked' : ''}>${esc(c)}</label>`).join('')}</div></div>`;
+  const orphan = p.cats.filter(c => !s.specialCategories.includes(c) && !s.functionCategories.includes(c));
+  openPanel(p.id ? '編輯商品' : '新增商品', `
+    <div class="grid2">
+      <label class="field" style="grid-column:1/-1"><span>商品名稱（中文）*</span><input id="eName" value="${esc(p.name)}"></label>
+      <label class="field"><span>韓文名稱（藥局版訂購單用）</span><input id="eKo" value="${esc(p.nameKo)}"></label>
+      <label class="field"><span>品牌</span><input id="eBrand" value="${esc(p.brand)}"></label>
+      <label class="field"><span>韓元單價 *</span><input id="ePrice" type="number" inputmode="numeric" value="${esc(p.price)}"></label>
+      <label class="field"><span>排序</span><input id="eSort" type="number" value="${esc(p.sort)}"></label>
+    </div>
+    ${catBox('特別分類', s.specialCategories)}
+    ${catBox('功能分類', s.functionCategories)}
+    ${orphan.length ? catBox('已不在設定中的舊分類（取消勾選即可移除）', orphan) : ''}
+    <div class="field"><span>商品照片</span>
+      <div class="imgprev" id="eImgPrev" style="${p.img ? `background-image:url('${esc(p.img)}')` : ''}"></div>
+      <div class="acts" style="margin-bottom:8px"><label class="btn ghost sm" style="cursor:pointer">上傳照片<input type="file" id="eFile" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden></label><span class="muted" id="eUp"></span></div>
+      <input id="eImg" placeholder="或貼上圖片網址" value="${esc(p.img)}" style="width:100%;height:40px;border:1px solid var(--line);border-radius:10px;padding:0 12px">
+    </div>
+    <label class="field"><span>商品說明</span><textarea id="eDesc">${esc(p.desc)}</textarea></label>
+    <label class="field"><span>額外搜尋關鍵字（例：痘痘貼、積雪草、cica）</span><input id="eKw" value="${esc(p.keywords)}"></label>
+    <label class="field" style="display:flex;align-items:center;gap:10px"><span style="margin:0">上架</span><label class="sw"><input type="checkbox" id="eAct" ${p.active ? 'checked' : ''}><span></span></label></label>`,
+    `<div class="acts">${p.id ? `<button class="btn ghost sm" id="eDel" style="color:var(--red)">刪除</button>` : ''}<span style="flex:1"></span><button class="btn" id="eSave">儲存</button></div>`);
+
+  $('#eImg').oninput = e => $('#eImgPrev').style.backgroundImage = e.target.value ? `url('${e.target.value}')` : '';
+  $('#eFile').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    $('#eUp').textContent = '上傳中…';
+    try{
+      const blob = await shrink(f, 900);
+      const url = await uploadImage(blob);
+      $('#eImg').value = url; $('#eImgPrev').style.backgroundImage = `url('${url}')`; $('#eUp').textContent = '已上傳';
+    }catch(err){ $('#eUp').textContent = '上傳失敗：' + err.message; }
+  };
+  $('#eSave').onclick = async () => {
+    const data = {
+      id:p.id, name:$('#eName').value.trim(), nameKo:$('#eKo').value.trim(), brand:$('#eBrand').value.trim(),
+      price:Number($('#ePrice').value) || 0, sort:Number($('#eSort').value) || 0,
+      cats:$$('.catbox input:checked').map(c => c.value), img:$('#eImg').value.trim(),
+      desc:$('#eDesc').value, keywords:$('#eKw').value.trim(), active:$('#eAct').checked
+    };
+    if (!data.name) return toast('請輸入商品名稱');
+    if (!data.price) return toast('請輸入韓元單價');
+    $('#eSave').disabled = true;
+    try{
+      const saved = await call('admin_saveProduct', data);
+      const i = A.products.findIndex(x => x.id === saved.id);
+      if (i >= 0) A.products[i] = saved; else A.products.push(saved);
+      A.products.sort((a, b) => a.sort - b.sort);
+      closePanel(); toast('已儲存'); renderProducts();
+    }catch(e){ toast(e.message); $('#eSave').disabled = false; }
+  };
+  if (p.id) $('#eDel').onclick = async () => {
+    if (!confirm(`確定刪除「${p.name}」？\n（只想暫時不賣可以改成下架）`)) return;
+    try{ await call('admin_deleteProduct', p.id); A.products = A.products.filter(x => x.id !== p.id); closePanel(); toast('已刪除'); renderProducts(); }
+    catch(e){ toast(e.message); }
+  };
+}
+
+// 照片壓縮成 JPEG，回傳 Blob
+function shrink(file, max){
+  return new Promise((res, rej) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url); c.toBlob(b => b ? res(b) : rej(new Error('照片轉檔失敗')), 'image/jpeg', 0.85);
+    };
+    img.onerror = () => rej(new Error('無法讀取這張照片'));
+    img.src = url;
+  });
+}
+
+// ================= 設定 =================
+function renderSettings(){
+  const s = A.settings;
+  $('#view').innerHTML = `
+    <div class="card2"><h3>基本</h3>
+      <label class="field"><span>訂購單抬頭</span><input id="sName" value="${esc(s.shopName)}"></label>
+      <label class="field"><span>取貨地點（一行一個，格式：名稱|地址，地址可省略）</span><textarea id="sPick">${esc(s.pickups.map(p => p.addr ? p.name + '|' + p.addr : p.name).join('\n'))}</textarea></label>
+      <label class="field"><span>優惠碼（一行一組，格式：代碼=折扣%，例：coolbau=5；客人輸入時不分大小寫）</span><textarea id="sCp">${esc((s.coupons || []).map(c => c.code + '=' + Math.round(c.rate * 1000) / 10).join('\n'))}</textarea></label>
+      <label class="field"><span>訂購單底部說明</span><textarea id="sNote">${esc(s.notice)}</textarea></label>
+    </div>
+    <div class="card2"><h3>分類</h3>
+      <label class="field"><span>特別分類（一行一個；第 2 個顯示黑色標籤、第 3 個顯示金色標籤）</span><textarea id="sSp">${esc(s.specialCategories.join('\n'))}</textarea></label>
+      <label class="field"><span>功能分類（一行一個）</span><textarea id="sFn" style="min-height:160px">${esc(s.functionCategories.join('\n'))}</textarea></label>
+      <div class="muted">改分類名稱後，已上架商品要到「商品」重新勾選新的分類。</div>
+    </div>
+    <div class="card2"><h3>退稅級距</h3>
+      <label class="field"><span>一行一級，格式：起始金額=退稅金額（未滿第一級不退稅）</span><textarea id="sRf" style="min-height:260px;font-variant-numeric:tabular-nums">${esc(s.refundTable.map(r => r[0] + '=' + r[1]).join('\n'))}</textarea></label>
+      <div class="grid2">
+        <label class="field"><span>超過這個金額改用 % 估算</span><input id="sAf" type="number" value="${s.refundAboveFrom}"></label>
+        <label class="field"><span>估算 %</span><input id="sAp" type="number" step="0.1" value="${Math.round(s.refundAbovePct * 1000) / 10}"></label>
+      </div>
+    </div>
+    <button class="btn" id="sSave">儲存設定</button>
+    <div class="muted" style="margin-top:14px">客人頁面約 10 分鐘內會更新（有快取）。</div>`;
+  const lines = id => $('#' + id).value.split('\n').map(x => x.trim()).filter(Boolean);
+  $('#sSave').onclick = async () => {
+    const data = {
+      shopName:$('#sName').value.trim(),
+      pickups:lines('sPick').map(l => { const [name, ...addr] = l.split('|'); return { name:name.trim(), addr:addr.join('|').trim() }; }),
+      coupons:lines('sCp').map(l => { const [code, pct] = l.split('='); return { code:(code || '').trim(), rate:(Number(pct) || 0) / 100 }; }).filter(c => c.code && c.rate > 0),
+      notice:$('#sNote').value.trim(),
+      specialCategories:lines('sSp'), functionCategories:lines('sFn'),
+      refundTable:lines('sRf').map(l => l.replace(/[,，\s₩]/g, '').split('=').map(Number)).filter(r => r.length === 2 && r[0] > 0),
+      refundAboveFrom:Number($('#sAf').value) || 400000,
+      refundAbovePct:(Number($('#sAp').value) || 0) / 100
+    };
+    if (!data.pickups.length) return toast('至少要有一個取貨地點');
+    $('#sSave').disabled = true;
+    try{ A.settings = await call('admin_saveSettings', data); toast('設定已儲存'); renderSettings(); }
+    catch(e){ toast(e.message); $('#sSave').disabled = false; }
+  };
+}
+</script>
+</body>
+</html>
