@@ -32,6 +32,12 @@ header{position:sticky;top:0;z-index:20;background:rgba(250,247,245,.96);backdro
 .promo{margin-top:8px;min-height:34px;padding:6px 10px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;text-align:center;line-height:1.35;border-radius:10px;font-size:13.5px;color:#fff;
   background:linear-gradient(90deg,#c8102e,#e53950);box-shadow:0 2px 8px rgba(200,16,46,.25)}
 .promo b{color:#ffe066;margin:0 3px}
+.promo{position:relative;overflow:hidden}
+.promo::after{content:"";position:absolute;top:0;bottom:0;left:0;width:40%;pointer-events:none;
+  background:linear-gradient(105deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.45) 50%,rgba(255,255,255,0) 100%);
+  transform:translateX(-120%) skewX(-20deg);animation:promoShine 4s ease-in-out infinite}
+@keyframes promoShine{0%{transform:translateX(-120%) skewX(-20deg)}40%,100%{transform:translateX(320%) skewX(-20deg)}}
+@media (prefers-reduced-motion:reduce){.promo::after{animation:none;display:none}}
 .promo small{font-size:11.5px;opacity:.85;margin-left:2px}
 .chips{display:flex;gap:8px;overflow-x:auto;padding:0 16px 12px;max-width:1100px;margin:0 auto;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
