@@ -399,7 +399,7 @@ const store = {
 (async function init(){
   S.cart = store.get('cb_cart', {});
   S.token = store.get('cb_token', null);
-  S.coupon = store.get('cb_coupon', null);
+  S.coupon = null; store.del('cb_coupon'); store.del('cb_cp_off'); // 每次打開都回到網站預設優惠
   try{
     const d = await api('api_bootstrap');
     S.settings = d.settings; S.products = d.products;
@@ -411,7 +411,7 @@ const store = {
     renderChips(); render(); renderCartBar();
     // 網站優惠碼自動套用（後台設定 autoCoupon；客人自己移除過就不再自動帶入）
     const ac = String(S.settings.autoCoupon || '').trim();
-    if (ac && !S.coupon && !store.get('cb_cp_off', false)){
+    if (ac && !S.coupon){
       try{ S.coupon = await api('api_checkCoupon', ac); store.set('cb_coupon', S.coupon); renderCartBar(); }catch(e){}
     }
   }catch(e){
