@@ -274,7 +274,15 @@ body{background:#f4f1ef}
 .ord .n{text-align:right;white-space:nowrap}
 .acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .st{font-size:12px;padding:3px 9px;border-radius:6px;font-weight:700;border:0;height:28px}
-.st.新訂單{background:#fff1d6;color:#8a5a00}.st.已傳藥局{background:#e3edff;color:#24489c}.st.已留貨{background:#e2f4ea;color:var(--green)}.st.已取貨{background:#ececec;color:#555}.st.已取消{background:#fbe3e3;color:#a11}
+.st.新訂單{background:#fff1d6;color:#8a5a00}.st.已傳藥局{background:#e3edff;color:#24489c}
+.rcards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rcard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.rcard .rt{font-weight:800;margin-bottom:6px}
+.rcard .rr{display:flex;justify-content:space-between;align-items:baseline;padding:3px 0}
+.rcard .rr span{color:var(--ink3,#888);font-size:13px}
+.rcard .rr b{font-size:18px}
+.btn.del{color:#b3261e;border-color:#f0c8c5}
+.btn.del.sure{background:#b3261e;color:#fff;border-color:#b3261e}
 .pk{display:inline-block;color:var(--red);font-size:14px;font-weight:900}
 .flt{background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:14px;margin-bottom:12px}
 .flt .r{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -458,9 +466,7 @@ function inDate(o){
   return true;
 }
 function inStatus(o){
-  if (A.fStatus === '') return o.status !== '已取消';
-  if (A.fStatus === 'ALL') return true;
-  return o.status === A.fStatus;
+  return !A.fStatus || o.status === A.fStatus;
 }
 function filtered(skipStatus){
   const q = norm(A.fQ);
@@ -481,9 +487,8 @@ function renderOrders(){
       </div>
       <div class="r">
         <select id="fs">
-          <option value="" ${A.fStatus === '' ? 'selected' : ''}>全部狀態（不含已取消）</option>
+          <option value="" ${A.fStatus === '' ? 'selected' : ''}>全部狀態</option>
           ${A.statuses.map(s => `<option ${A.fStatus === s ? 'selected' : ''}>${s}</option>`).join('')}
-          <option value="ALL" ${A.fStatus === 'ALL' ? 'selected' : ''}>全部（含已取消）</option>
         </select>
         <select id="fp"><option value="">全部取貨點</option>${A.settings.pickups.map(p => `<option ${A.fPick === p.name ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
         <input type="search" id="fq" placeholder="搜尋訂單編號、姓名、LINE、商品" value="${esc(A.fQ)}">
@@ -503,75 +508,16 @@ function renderOrders(){
   drawOrders();
 }
 
-function itemSummary(list){
-  const m = {};
-  list.forEach(o => o.items.forEach(i => {
-    const k = i.id || i.name;
-    m[k] = m[k] || { name:i.name, nameKo:i.nameKo, price:i.price, qty:0, amount:0, orders:0 };
-    m[k].qty += i.qty; m[k].amount += i.amount; m[k].orders += 1;
-  }));
-  return Object.values(m).sort((a, b) => b.qty - a.qty);
-}
-
 function drawStats(){
-  const list = filtered(), sum = k => list.reduce((a, o) => a + (k === 'qty' ? o.items.reduce((x, i) => x + i.qty, 0) : o[k]), 0);
-  const range = A.dFrom || A.dTo ? `${A.dFrom || '最早'} ～ ${A.dTo || '最新'}` : '全部日期';
-  const statusTxt = A.fStatus === '' ? '不含已取消' : A.fStatus === 'ALL' ? '含已取消' : A.fStatus;
-  const base = filtered(true);
-  const byPick = A.settings.pickups.map(p => { const l = list.filter(o => o.pickup === p.name); return `<span>${esc(p.name)}：${l.length} 筆・${won(l.reduce((a, o) => a + o.subtotal, 0))}</span>`; }).join('');
-  const bySt = A.statuses.map(s => { const n = base.filter(o => o.status === s).length; return `<button data-sf="${s}" class="${A.fStatus === s ? 'on' : ''}">${s} ${n}</button>`; }).join('');
-  const items = A.showItems ? itemSummary(list) : [];
-  $('#rep').innerHTML = `
-    <div class="hd2"><b>報表</b><span class="muted">${A.dBy === 'pickup' ? '依取貨日' : '依下單日'}・${range}・${esc(A.fPick || '全部取貨點')}・${statusTxt}</span></div>
-    <div class="kp">
-      <div><span>訂單數</span><b>${list.length}</b></div>
-      <div><span>商品件數</span><b>${sum('qty')}</b></div>
-      <div class="main"><span>商品總額</span><b>${won(sum('subtotal'))}</b></div>
-      <div><span>優惠碼折扣</span><b>${won(sum('discount'))}</b></div>
-      <div><span>預估退稅</span><b>${won(sum('refund'))}</b></div>
-      <div><span>預估實付</span><b>${won(sum('net'))}</b></div>
+  const today = dstr(new Date()), month = today.slice(0, 7);
+  const card = (title, list) => `<div class="rcard"><div class="rt">${title}</div>
+      <div class="rr"><span>訂單數</span><b>${list.length}</b></div>
+      <div class="rr"><span>折扣後金額</span><b class="won">${won(list.reduce((a, o) => a + o.subtotal - o.discount, 0))}</b></div></div>`;
+  $('#rep').innerHTML = `<div class="rcards">
+      ${card(`今天 ${today.slice(5).replace('-', '/')}`, A.orders.filter(o => o.createdDay === today))}
+      ${card(`本月 ${Number(month.slice(5))} 月`, A.orders.filter(o => (o.createdDay || '').startsWith(month)))}
     </div>
-    <div class="brk">${byPick}</div>
-    <div class="brk"><span class="muted" style="background:none;padding-left:0">狀態：</span>${bySt}</div>
-    <div class="acts" style="margin-top:12px">
-      <button class="btn ghost sm" id="tgItems">${A.showItems ? '收起' : '查看'}商品彙總（備貨用）</button>
-      <button class="btn ghost sm" id="csvO">匯出訂單 CSV</button>
-      <button class="btn ghost sm" id="csvI">匯出商品彙總 CSV</button>
-    </div>
-    ${A.showItems ? (items.length ? `<table class="itbl"><tr><th>商品</th><th>韓文名稱</th><th class="n">單價</th><th class="n">總數量</th><th class="n">總額</th></tr>
-      ${items.map(i => `<tr><td>${esc(i.name)}</td><td>${esc(i.nameKo)}</td><td class="n">${won(i.price)}</td><td class="n"><b>${i.qty}</b></td><td class="n">${won(i.amount)}</td></tr>`).join('')}</table>` : '<div class="muted" style="margin-top:10px">沒有資料</div>') : ''}`;
-  $$('[data-sf]').forEach(b => b.onclick = () => { A.fStatus = A.fStatus === b.dataset.sf ? '' : b.dataset.sf; $('#fs').value = A.fStatus; drawOrders(); });
-  $('#tgItems').onclick = () => { A.showItems = !A.showItems; drawStats(); };
-  const tag = `${A.dFrom || 'all'}_${A.dTo || 'all'}${A.fPick ? '_' + A.fPick : ''}`;
-  $('#csvO').onclick = () => exportCSV(`訂單_${tag}.csv`, [
-    ['訂單編號', '下單時間', '護照英文姓名', '聯繫方式', '取貨地點', '預計取貨日', '狀態', '品項數', '件數', '商品總額', '優惠碼', '優惠折扣', '預估退稅', '預估實付', '備註', '明細'],
-    ...list.map(o => [o.no, o.created, o.name, o.contact, o.pickup, o.date, o.status, o.items.length, o.items.reduce((a, i) => a + i.qty, 0),
-      o.subtotal, o.coupon, o.discount, o.refund, o.net, o.note, o.items.map(i => `${i.name}×${i.qty}`).join('、')])
-  ]);
-  $('#csvI').onclick = () => exportCSV(`商品彙總_${tag}.csv`, [
-    ['商品', '韓文名稱', '單價', '總數量', '總額', '出現訂單數'],
-    ...itemSummary(list).map(i => [i.name, i.nameKo, i.price, i.qty, i.amount, i.orders])
-  ]);
-}
-
-function exportCSV(filename, rows){
-  const csv = '﻿' + rows.map(r => r.map(v => { const t = String(v == null ? '' : v); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }).join(',')).join('\r\n');
-  try{
-    const url = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8' }));
-    triggerDownload(url, filename);
-    setTimeout(() => URL.revokeObjectURL(url), 30000);
-  }catch(e){}
-  // 備用：有些瀏覽器擋下載，提供可複製的表格
-  const tsv = rows.map(r => r.map(v => String(v == null ? '' : v).replace(/[\t\n]/g, ' ')).join('\t')).join('\n');
-  openPanel(filename, `
-    <div class="muted" style="margin-bottom:8px">如果沒有自動下載：按「複製」後，直接貼到 Excel 或 Google 試算表。</div>
-    <textarea id="tsv" style="width:100%;height:50vh;font-size:12px;border:1px solid var(--line);border-radius:10px;padding:8px" readonly>${esc(tsv)}</textarea>`,
-    `<button class="btn block" id="cpy">複製</button>`);
-  $('#cpy').onclick = async () => {
-    const ta = $('#tsv'); ta.select();
-    try{ await navigator.clipboard.writeText(ta.value); toast('已複製'); }
-    catch(e){ try{ document.execCommand('copy'); toast('已複製'); }catch(e2){ toast('請手動全選複製'); } }
-  };
+    <div class="muted" style="font-size:12px;margin-top:6px">依下單日計算・折扣後金額＝商品總價－優惠碼折扣</div>`;
 }
 
 function drawOrders(){
@@ -599,6 +545,7 @@ function drawOrders(){
           <button class="btn ghost sm" data-x="cu-img">客人版圖片</button>
           <button class="btn ghost sm" data-x="cu-pdf">客人版 PDF</button>
           <button class="btn ghost sm" data-x="view">預覽</button>
+          <button class="btn ghost sm del" data-del="${esc(o.no)}">刪除訂單</button>
         </div>
       </div>
     </div>`).join('') : `<div class="empty muted" style="text-align:center;padding:40px">沒有符合的訂單</div>`;
@@ -612,6 +559,17 @@ function drawOrders(){
     o.status = sel.value; sel.className = 'st ' + sel.value;
     try{ await call('admin_setStatus', o.no, sel.value); toast(`${o.no} → ${sel.value}`); drawOrders(); }
     catch(e){ o.status = prev; toast(e.message); drawOrders(); }
+  });
+  $$('[data-del]').forEach(b => b.onclick = async () => {
+    const no = b.dataset.del;
+    if (!b.classList.contains('sure')){
+      b.classList.add('sure'); b.textContent = '確定刪除？再按一次';
+      setTimeout(() => { if (b.isConnected){ b.classList.remove('sure'); b.textContent = '刪除訂單'; } }, 4000);
+      return;
+    }
+    b.disabled = true;
+    try{ await call('admin_deleteOrder', no); A.orders = A.orders.filter(o => o.no !== no); A.openNo = null; toast(`已刪除 ${no}`); drawOrders(); }
+    catch(e){ b.disabled = false; toast(e.message); }
   });
   $$('[data-x]').forEach(b => b.onclick = () => {
     const o = A.orders.find(x => x.no === b.closest('.ord').dataset.no), s = A.settings, k = b.dataset.x;

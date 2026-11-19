@@ -316,7 +316,7 @@ begin
     'settings', _settings(),
     'products', coalesce((select jsonb_agg(_product_json(p) order by p.sort, p.id) from products p), '[]'::jsonb),
     'orders', coalesce((select jsonb_agg(_order_json(o) order by o.created_at desc) from orders o), '[]'::jsonb),
-    'statuses', '["新訂單","已傳藥局","已留貨","已取貨","已取消"]'::jsonb));
+    'statuses', '["新訂單","已傳藥局"]'::jsonb));
 end $$;
 
 create or replace function public.admin_saveproduct(args jsonb default '[]') returns jsonb
@@ -346,11 +346,20 @@ begin
   return _ok('true'::jsonb);
 end $$;
 
+create or replace function public.admin_deleteorder(args jsonb default '[]') returns jsonb
+language plpgsql security definer set search_path = public as $$
+begin
+  if not _is_admin(args->>0) then return _fail('LOGIN'); end if;
+  delete from orders where no = args->>1;
+  if not found then return _fail('找不到訂單'); end if;
+  return _ok('true'::jsonb);
+end $$;
+
 create or replace function public.admin_setstatus(args jsonb default '[]') returns jsonb
 language plpgsql security definer set search_path = public as $$
 begin
   if not _is_admin(args->>0) then return _fail('LOGIN'); end if;
-  if coalesce(args->>2, '') not in ('新訂單','已傳藥局','已留貨','已取貨','已取消') then return _fail('狀態不正確'); end if;
+  if coalesce(args->>2, '') not in ('新訂單','已傳藥局') then return _fail('狀態不正確'); end if;
   update orders set status = args->>2 where no = args->>1;
   if not found then return _fail('找不到訂單'); end if;
   return _ok('true'::jsonb);
@@ -379,6 +388,6 @@ revoke all on all functions in schema public from public, anon, authenticated;
 grant execute on function public.api_bootstrap(jsonb), public.api_checkcoupon(jsonb), public.api_register(jsonb),
   public.api_login(jsonb), public.api_me(jsonb), public.api_myorders(jsonb), public.api_placeorder(jsonb),
   public.admin_login(jsonb), public.admin_setpassword(jsonb), public.admin_bootstrap(jsonb),
-  public.admin_saveproduct(jsonb), public.admin_deleteproduct(jsonb), public.admin_setstatus(jsonb),
+  public.admin_saveproduct(jsonb), public.admin_deleteproduct(jsonb), public.admin_setstatus(jsonb), public.admin_deleteorder(jsonb),
   public.admin_savesettings(jsonb)
   to anon, authenticated;
