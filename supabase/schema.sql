@@ -303,7 +303,7 @@ begin
     perform pg_sleep(1); return _fail('舊密碼不正確');
   end if;
   update settings set admin_salt = salt, admin_hash = _hash(pw, salt), setup_code = null where id = 1;
-  delete from admin_sessions;
+  delete from admin_sessions where true;
   return _ok('true'::jsonb);
 end $$;
 
