@@ -295,19 +295,8 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 110px}
 .card .im{aspect-ratio:1;background:#f3eeec center/cover no-repeat;position:relative}
 .card .im .tags{position:absolute;left:6px;top:6px;display:flex;flex-direction:column;gap:3px;align-items:flex-start}
 .tag{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:6px;background:var(--red);color:#fff}
-.tag.tw{background:linear-gradient(135deg,#ffb300,#ffd23f 50%,#ff9800);color:#5a3200;text-shadow:0 1px 0 rgba(255,255,255,.5);box-shadow:0 1px 4px rgba(255,152,0,.45)}
-.chip.tw{background:linear-gradient(135deg,#ffb300,#ffd23f 50%,#ff9800);border-color:#ffb300;color:#5a3200;font-weight:700}
-.chip.tw.on{background:linear-gradient(135deg,#ff8f00,#ffc400 50%,#ff6f00);border-color:#ff8f00;color:#fff}
-.sec-h h2.tw{display:inline-block;padding:2px 12px;border-radius:10px;background:linear-gradient(135deg,#ffb300,#ffd23f 50%,#ff9800);color:#5a3200}
-.hot{background:linear-gradient(90deg,#d50000,#ff3d00 55%,#ff9100);color:#fff;border-color:#ff3d00;box-shadow:0 1px 5px rgba(255,61,0,.4)}
-.chip.hot,.chip.hot.on{color:#fff;font-weight:700;border-color:#ff3d00}
-.chip.hot.on{outline:2px solid #ffd600;outline-offset:1px}
-.sec-h h2.hot{display:inline-block;padding:2px 12px;border-radius:10px}
-.champ{background:linear-gradient(135deg,#1a1a1a,#3a2c00 55%,#1a1a1a);color:#ffd54f;border:1px solid #ffc107;font-weight:800;
-  box-shadow:0 0 0 1px rgba(255,193,7,.35),0 2px 8px rgba(255,179,0,.45)}
-.chip.champ,.chip.champ.on{color:#ffd54f;border-color:#ffc107}
-.chip.champ.on{outline:2px solid #ffc107;outline-offset:1px}
-.sec-h h2.champ{display:inline-block;padding:2px 12px;border-radius:10px}
+.tag.panda{background:#222}
+.tag.tw{background:var(--gold)}
 .card .tx{padding:9px 10px 10px;display:flex;flex-direction:column;flex:1}
 .card .br{font-size:11.5px;color:var(--ink3)}
 .card .nm{font-size:14px;font-weight:700;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:1px 0 6px}
@@ -432,14 +421,14 @@ const store = {
 })();
 
 function allCats(){ return [...S.settings.specialCategories, ...S.settings.functionCategories]; }
-function tagClass(c){ const sp = S.settings.specialCategories; return c === sp[0] ? 'hot' : c === sp[1] ? 'champ' : c === sp[2] ? 'tw' : ''; }
+function tagClass(c){ return c === S.settings.specialCategories[1] ? 'panda' : c === S.settings.specialCategories[2] ? 'tw' : ''; }
 
 // ---------- 分類列 ----------
 function renderChips(){
   const sp = S.settings.specialCategories;
   const has = c => S.products.some(p => p.cats.includes(c));
   const btns = ['全部', ...sp.filter(has)].map(c =>
-    `<button class="chip ${sp.includes(c) ? 'sp' : ''} ${c === sp[2] ? 'tw' : c === sp[1] ? 'champ' : c === sp[0] ? 'hot' : ''} ${S.cat === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+    `<button class="chip ${sp.includes(c) ? 'sp' : ''} ${S.cat === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
   const fn = S.settings.functionCategories.filter(has);
   const inFn = fn.includes(S.cat);
   const sel = fn.length ? `<label class="chip fsel ${inFn ? 'on' : ''}"><span>${inFn ? esc(S.cat) : '依功效分類'}</span><span class="car">▾</span>
@@ -502,7 +491,7 @@ function render(){
   }
   if (S.cat !== '全部'){
     const res = list.filter(p => p.cats.includes(S.cat));
-    main.innerHTML = `<div class="sec-h"><h2 class="${tagClass(S.cat) === 'tw' ? 'tw' : tagClass(S.cat) === 'hot' ? 'hot' : tagClass(S.cat) === 'champ' ? 'champ' : ''}">${esc(S.cat)}</h2><span class="muted">${res.length} 項</span></div>
+    main.innerHTML = `<div class="sec-h"><h2>${esc(S.cat)}</h2><span class="muted">${res.length} 項</span></div>
       ${res.length ? `<div class="grid">${res.map(cardHTML).join('')}</div>` : `<div class="empty">這個分類還沒有商品</div>`}`;
     return;
   }
@@ -510,7 +499,7 @@ function render(){
   S.settings.specialCategories.forEach(c => {
     const res = list.filter(p => p.cats.includes(c));
     if (!res.length) return;
-    html += `<div class="sec-h"><h2 class="${tagClass(c) === 'tw' ? 'tw' : tagClass(c) === 'hot' ? 'hot' : tagClass(c) === 'champ' ? 'champ' : ''}">${esc(c)}</h2><button data-goto="${esc(c)}">全部 ${res.length} ›</button></div>
+    html += `<div class="sec-h"><h2>${esc(c)}</h2><button data-goto="${esc(c)}">全部 ${res.length} ›</button></div>
              <div class="row">${res.map(cardHTML).join('')}</div>`;
   });
   html += `<div class="sec-h"><h2>所有商品</h2><span class="muted">${list.length} 項</span></div>
