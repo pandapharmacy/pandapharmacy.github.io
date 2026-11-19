@@ -717,11 +717,17 @@ async function submitOrder(){
 function showOrder(o, fresh){
   openPanel('order', fresh ? '訂購單已送出 ✓' : '訂購單', `
     ${fresh ? `<div class="hint" style="margin:0 0 14px;background:#e2f4ea;color:var(--green)">熊貓藥局已收到你的訂購單，會幫你留貨。可以在「我的訂單」隨時查看。</div>` : ''}
-    <div class="sheetwrap"><div class="scaler">${orderSheetHTML(o, S.settings, 'customer')}</div></div>`,
-    `<div style="display:flex;gap:10px"><button class="btn ghost" style="flex:1" id="dImg">存成圖片</button><button class="btn" style="flex:1" id="dPdf">下載 PDF</button></div>`);
+    <div class="hint" id="saveHint" style="margin:0 0 12px;text-align:center">📌 <b>長按下方訂購單圖片</b> → 選「儲存圖片」或「加入照片」即可保存</div>
+    <div class="sheetwrap"><div class="scaler">${orderSheetHTML(o, S.settings, 'customer')}</div></div>
+    <img id="sheetImg" alt="訂購單 ${o.no}" style="display:none;width:100%;border-radius:8px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.12);-webkit-touch-callout:default;user-select:auto">`);
   fitSheet();
-  $('#dImg').onclick = () => exportImage(o, S.settings, 'customer').catch(e => toast('產生失敗：' + e.message));
-  $('#dPdf').onclick = () => exportPDF(o, S.settings, 'customer').catch(e => toast('產生失敗：' + e.message));
+  const no = o.no;
+  sheetCanvas(o, S.settings, 'customer').then(c => {
+    const img = $('#sheetImg'); if (!img || S.sheetNo !== no) return;
+    img.src = c.toDataURL('image/png'); img.style.display = 'block';
+    const w = $('.sheetwrap'); if (w) w.style.display = 'none';
+  }).catch(() => { const h = $('#saveHint'); if (h) h.innerHTML = '📌 請<b>截圖</b>保存這張訂購單'; });
+  S.sheetNo = no;
 }
 function fitSheet(){
   const w = $('.sheetwrap'); if (!w) return;
