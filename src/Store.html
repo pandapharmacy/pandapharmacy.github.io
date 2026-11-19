@@ -311,7 +311,7 @@ function totalsHTML(sub){
   return `<div class="tot">
     <div><span>商品總價</span><span class="won">${won(t.subtotal)}</span></div>
     ${S.coupon ? `<div class="g"><span>優惠碼 ${esc(S.coupon.code)}（${pct}%）</span><span class="won">−${won(t.discount)}</span></div>` : ''}
-    <div class="g"><span>預估退稅</span><span class="won">−${won(t.refund)}</span></div>
+    <div class="g"><span>預估退稅（現場退稅）</span><span class="won">−${won(t.refund)}</span></div>
     <div class="big"><span>預估實際花費</span><b class="won">${won(t.net)}</b></div>
   </div>
   ${nb ? `<div class="hint">再買 <b>${won(nb.need)}</b>，退稅可以提高到 <b>${won(nb.refund)}</b></div>` : ''}`;
