@@ -349,6 +349,7 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 110px}
 .store .ph::-webkit-scrollbar{display:none}
 .store .ph img{flex:none;width:82%;max-width:420px;aspect-ratio:4/3;object-fit:cover;border-radius:12px;scroll-snap-align:start;background:#f3eeec}
 .store .ph img:only-child{width:100%}
+.store .intro{white-space:pre-line;font-size:14.5px;line-height:1.75;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .store dl{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0 0 10px;font-size:14px}
 .store dt{color:var(--ink3);white-space:nowrap}
 .store dd{margin:0;white-space:pre-line;word-break:break-word}
@@ -647,7 +648,13 @@ function openInfo(){
       <div class="acts"><a class="btn ghost sm" href="${esc(mapUrl(st, p.name))}" target="_blank" rel="noopener">開啟地圖</a></div>
     </div>`;
   }).join('');
-  openPanel('info', '藥局資訊', list || '<div class="empty">資訊準備中</div>');
+  const it = S.settings.infoIntro || {};
+  const intro = (it.text || (it.photos || []).length) ? `<div class="store">
+      <h3>關於熊貓藥局</h3>
+      ${(it.photos || []).length ? `<div class="ph">${it.photos.map(u => `<img src="${esc(u)}" alt="熊貓藥局" loading="lazy">`).join('')}</div>` : ''}
+      ${it.text ? `<div class="intro">${esc(it.text)}</div>` : ''}
+    </div>` : '';
+  openPanel('info', '藥局資訊', (intro + list) || '<div class="empty">資訊準備中</div>');
 }
 $('#btnInfo').onclick = () => S.settings && openInfo();
 

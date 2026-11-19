@@ -46,6 +46,7 @@ body{background:#f4f1ef}
 .sphotos .sp img{width:100%;height:100%;object-fit:cover}
 .sphotos .sp .x{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:12px;background:rgba(0,0,0,.6);color:#fff;font-size:16px;line-height:1}
 .sphotos .add{display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink2);font-weight:700;border-style:dashed}
+.rt2{display:flex;align-items:center;gap:6px;justify-content:flex-end}
 .btn.del{color:#b3261e;border-color:#f0c8c5}
 .btn.del.sure{background:#b3261e;color:#fff;border-color:#b3261e}
 .pk{display:inline-block;color:var(--red);font-size:14px;font-weight:900}
@@ -202,7 +203,7 @@ function renderShell(){
     </div>
   </div></div>
   <div class="wrap" id="view"></div>`;
-  $$('[data-tab]').forEach(b => b.onclick = () => { A.tab = b.dataset.tab; renderShell(); });
+  $$('[data-tab]').forEach(b => b.onclick = () => { A.tab = b.dataset.tab; A.introDraft = null; renderShell(); });
   ({ orders:renderOrders, products:renderProducts, stores:renderStores, settings:renderSettings })[A.tab]();
 }
 
@@ -296,7 +297,8 @@ function drawOrders(){
         <div class="hide-m"><b>${esc(o.name)}</b><span class="muted">${esc(o.contact || '-')}</span></div>
         <div class="hide-m"><span class="pk">${esc(o.pickup)}</span><div class="muted">取貨 ${esc(o.date || '未填')}</div></div>
         <div class="hide-m"><b class="won">${won(o.subtotal)}</b><span class="muted">${o.items.length} 項${o.coupon ? '・' + esc(o.coupon) : ''}</span></div>
-        <select class="st ${esc(o.status)}" data-st="${esc(o.no)}">${A.statuses.map(s => `<option ${s === o.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
+        <div class="rt2"><select class="st ${esc(o.status)}" data-st="${esc(o.no)}">${A.statuses.map(s => `<option ${s === o.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
+        <button class="btn ghost sm del" data-del="${esc(o.no)}">刪除</button></div>
       </div>
       <div class="d">
         <table>
@@ -307,17 +309,12 @@ function drawOrders(){
         ${o.note ? `<div style="margin-bottom:10px"><span class="muted">備註：</span>${esc(o.note)}</div>` : ''}
         <div class="acts">
           <button class="btn sm" data-x="ph-img">藥局版圖片</button>
-          <button class="btn ghost sm" data-x="ph-pdf">藥局版 PDF</button>
-          <button class="btn ghost sm" data-x="cu-img">客人版圖片</button>
-          <button class="btn ghost sm" data-x="cu-pdf">客人版 PDF</button>
-          <button class="btn ghost sm" data-x="view">預覽</button>
-          <button class="btn ghost sm del" data-del="${esc(o.no)}">刪除訂單</button>
         </div>
       </div>
     </div>`).join('') : `<div class="empty muted" style="text-align:center;padding:40px">沒有符合的訂單</div>`;
 
   $$('[data-tg]').forEach(h => h.onclick = e => {
-    if (e.target.closest('select')) return;
+    if (e.target.closest('select,button')) return;
     A.openNo = A.openNo === h.dataset.tg ? null : h.dataset.tg; drawOrders();
   });
   $$('[data-st]').forEach(sel => sel.onchange = async () => {
@@ -329,8 +326,8 @@ function drawOrders(){
   $$('[data-del]').forEach(b => b.onclick = async () => {
     const no = b.dataset.del;
     if (!b.classList.contains('sure')){
-      b.classList.add('sure'); b.textContent = '確定刪除？再按一次';
-      setTimeout(() => { if (b.isConnected){ b.classList.remove('sure'); b.textContent = '刪除訂單'; } }, 4000);
+      b.classList.add('sure'); b.textContent = '確定刪除？';
+      setTimeout(() => { if (b.isConnected){ b.classList.remove('sure'); b.textContent = '刪除'; } }, 4000);
       return;
     }
     b.disabled = true;
@@ -476,7 +473,18 @@ function renderStores(){
     return { name:p.name, addr:st.addr || p.addr || '', hours:st.hours || '', map:st.map || '', note:st.note || '', photos:[...(st.photos || [])] };
   });
   A.storeDraft = cur;
-  $('#view').innerHTML = cur.map((st, i) => `
+  const it = s.infoIntro || {};
+  A.introDraft = A.introDraft || { text:it.text || '', photos:[...(it.photos || [])] };
+  const ip = A.introDraft;
+  $('#view').innerHTML = `
+    <div class="card2" id="introCard"><h3>關於熊貓藥局（顯示在最上面）</h3>
+      <label class="field"><span>介紹文字（一行一點）</span><textarea id="inText" style="min-height:150px">${esc(ip.text)}</textarea></label>
+      <div class="field"><span>照片（團隊、客人合照等）</span></div>
+      <div class="sphotos">${ip.photos.map((u, j) => `<div class="sp"><img src="${esc(u)}"><button class="x" data-irm="${j}" title="刪除">×</button></div>`).join('')}
+        <label class="sp add"><input type="file" accept="image/jpeg,image/png,image/webp,image/heic" multiple id="inUp" hidden><span>＋ 加照片</span></label>
+      </div>
+      <div class="muted" id="inMsg" style="margin-top:6px"></div>
+    </div>` + cur.map((st, i) => `
     <div class="card2" data-si="${i}"><h3>${esc(st.name)}店</h3>
       <label class="field"><span>地址（客人和地圖會用到，可韓文＋中文）</span><textarea data-k="addr" style="min-height:60px">${esc(st.addr)}</textarea></label>
       <label class="field"><span>營業時間</span><textarea data-k="hours" style="min-height:60px" placeholder="例：每天 10:00–22:00">${esc(st.hours)}</textarea></label>
@@ -489,7 +497,17 @@ function renderStores(){
       <div class="muted" data-upmsg="${i}" style="margin-top:6px"></div>
     </div>`).join('') + `<button class="btn" id="stSave">儲存藥局資訊</button>
     <div class="muted" style="margin-top:10px">儲存後客人頁面右上角「藥局資訊」就會顯示。</div>`;
-  const collect = () => $$('[data-si]').forEach(c => { const st = A.storeDraft[c.dataset.si]; $$('[data-k]', c).forEach(f => st[f.dataset.k] = f.value.trim()); });
+  const collect = () => { A.introDraft.text = $('#inText').value.trim(); $$('[data-si]').forEach(c => { const st = A.storeDraft[c.dataset.si]; $$('[data-k]', c).forEach(f => st[f.dataset.k] = f.value.trim()); }); };
+  $$('[data-irm]').forEach(b => b.onclick = () => { collect(); A.introDraft.photos.splice(Number(b.dataset.irm), 1); redraw(); });
+  $('#inUp').onchange = async () => {
+    const files = [...$('#inUp').files]; collect();
+    for (let k = 0; k < files.length; k++){
+      $('#inMsg').textContent = `上傳中 ${k + 1}/${files.length}…`;
+      try{ A.introDraft.photos.push(await uploadImage(await shrink(files[k], 1400))); }
+      catch(e){ toast('有一張照片上傳失敗：' + e.message); }
+    }
+    redraw(); toast('照片已上傳，記得按「儲存藥局資訊」');
+  };
   $$('[data-rm]').forEach(b => b.onclick = () => {
     collect(); const [i, j] = b.dataset.rm.split(':').map(Number); A.storeDraft[i].photos.splice(j, 1); redraw();
   });
@@ -507,7 +525,8 @@ function renderStores(){
     collect(); $('#stSave').disabled = true;
     const stores = A.storeDraft.map(x => ({ ...x }));
     const pickups = A.settings.pickups.map(p => { const st = stores.find(x => x.name === p.name); return { name:p.name, addr:st ? st.addr.split('\n')[0] : p.addr }; });
-    try{ A.settings = await call('admin_saveSettings', { stores, pickups }); toast('藥局資訊已儲存'); renderStores(); }
+    const infoIntro = { text:A.introDraft.text, photos:[...A.introDraft.photos] };
+    try{ A.settings = await call('admin_saveSettings', { stores, pickups, infoIntro }); A.introDraft = null; toast('藥局資訊已儲存'); renderStores(); }
     catch(e){ toast(e.message); $('#stSave').disabled = false; }
   };
   function redraw(){ const d = A.storeDraft; renderStoresFrom(d); }
