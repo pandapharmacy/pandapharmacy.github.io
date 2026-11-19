@@ -109,16 +109,29 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 110px}
 .tabs2{display:flex;background:#efe9e7;border-radius:10px;padding:3px;margin-bottom:14px}
 .tabs2 button{flex:1;height:36px;border-radius:8px;font-weight:700;color:var(--ink2)}
 .tabs2 button.on{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
-.store{margin-bottom:22px}
-.store h3{margin:0 0 8px;font-size:18px;font-weight:900}
-.store .ph{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px 10px;padding:0 16px;scrollbar-width:none}
-.store .ph::-webkit-scrollbar{display:none}
-.store .ph img{flex:none;height:min(320px,62vw);width:auto;max-width:88%;object-fit:contain;border-radius:12px;scroll-snap-align:start;background:#f3eeec}
-.store .intro{white-space:pre-line;font-size:14.5px;line-height:1.75;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
-.store dl{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0 0 10px;font-size:14px}
-.store dt{color:var(--ink3);white-space:nowrap}
-.store dd{margin:0;white-space:pre-line;word-break:break-word}
-.store .acts{display:flex;gap:8px;flex-wrap:wrap}
+.stores{display:grid;gap:16px}
+@media (min-width:640px){.stores{grid-template-columns:1fr 1fr}}
+.scard{background:#fff;border-radius:16px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
+.scard .hero{position:relative;aspect-ratio:4/3;background:#f3eeec;cursor:zoom-in}
+.scard .hero{overflow:hidden}
+.scard .hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;display:block}
+.scard .hero .tag2{position:absolute;left:12px;bottom:12px;background:rgba(0,0,0,.62);color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px}
+.scard .thumbs{display:flex;gap:8px;padding:10px 14px 0}
+.scard .thumbs button{width:58px;height:58px;border-radius:10px;overflow:hidden;border:2px solid transparent;padding:0;background:#f3eeec;flex:none}
+.scard .thumbs button.on{border-color:var(--red)}
+.scard .thumbs img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block}
+.scard .bd2{padding:14px 16px 16px;display:flex;flex-direction:column;gap:10px;flex:1}
+.scard h3{margin:0;font-size:19px;font-weight:900;display:flex;align-items:baseline;gap:8px}
+.scard h3 small{font-size:12.5px;font-weight:600;color:var(--ink3)}
+.scard .rows{display:grid;grid-template-columns:auto 1fr;gap:7px 14px;font-size:14px;line-height:1.5}
+.scard .rows dt{color:var(--ink3);white-space:nowrap}
+.scard .rows dd{margin:0;white-space:pre-line;word-break:break-word}
+.scard .map{margin-top:auto;width:100%}
+.team{margin-bottom:16px}
+.team .hero{aspect-ratio:16/10}
+.team .hero img{object-position:center 40%}
+.lbx{position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;padding:16px}
+.lbx img{max-width:100%;max-height:100%;border-radius:8px}
 a.btn{text-decoration:none}
 .pdimg{aspect-ratio:1;border-radius:var(--r);background:#f3eeec center/cover;margin-bottom:12px}
 </style>
@@ -400,26 +413,39 @@ function mapUrl(st, name){
   return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q);
 }
 function openInfo(){
-  const list = S.settings.pickups.map(p => {
-    const st = storeInfo(p.name), addr = st.addr || p.addr || '';
-    return `<div class="store">
-      <h3>${esc(p.name)}店</h3>
-      ${(st.photos || []).length ? `<div class="ph">${st.photos.map(u => `<img src="${esc(u)}" alt="${esc(p.name)}店環境" loading="lazy">`).join('')}</div>` : ''}
-      <dl>
-        ${addr ? `<dt>地址</dt><dd>${esc(addr)}</dd>` : ''}
-        ${st.hours ? `<dt>營業時間</dt><dd>${esc(st.hours)}</dd>` : ''}
-        ${st.note ? `<dt>交通／說明</dt><dd>${esc(st.note)}</dd>` : ''}
-      </dl>
-      <div class="acts"><a class="btn ghost sm" href="${esc(mapUrl(st, p.name))}" target="_blank" rel="noopener">開啟地圖</a></div>
+  const card = (title, sub, photos, rows, map) => {
+    const ph = photos || [];
+    return `<div class="scard">
+      ${ph.length ? `<div class="hero" data-zoom><img src="${esc(ph[0])}" alt="${esc(title)}"></div>` : ''}
+      ${ph.length > 1 ? `<div class="thumbs">${ph.map((u, i) => `<button class="${i ? '' : 'on'}" data-sw="${esc(u)}"><img src="${esc(u)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}
+      <div class="bd2">
+        <h3>${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ''}</h3>
+        ${rows.length ? `<dl class="rows">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` : ''}
+        ${map ? `<a class="btn ghost map" href="${esc(map)}" target="_blank" rel="noopener">開啟地圖</a>` : ''}
+      </div>
     </div>`;
-  }).join('');
+  };
   const it = S.settings.infoIntro || {};
-  const intro = (it.text || (it.photos || []).length) ? `<div class="store">
-      <h3>關於熊貓藥局</h3>
-      ${(it.photos || []).length ? `<div class="ph">${it.photos.map(u => `<img src="${esc(u)}" alt="熊貓藥局" loading="lazy">`).join('')}</div>` : ''}
-      ${it.text ? `<div class="intro">${esc(it.text)}</div>` : ''}
-    </div>` : '';
-  openPanel('info', '藥局資訊', (intro + list) || '<div class="empty">資訊準備中</div>');
+  const team = (it.photos || []).length ? `<div class="scard team"><div class="hero" data-zoom><img src="${esc(it.photos[0])}" alt="熊貓藥局團隊"><span class="tag2">熊貓藥局藥師團隊</span></div>
+      ${it.text ? `<div class="bd2"><div style="white-space:pre-line;font-size:14px;line-height:1.7">${esc(it.text)}</div></div>` : ''}</div>` : '';
+  const stores = S.settings.pickups.map(p => {
+    const st = storeInfo(p.name), addr = st.addr || p.addr || '';
+    const rows = [];
+    if (st.hours) rows.push(['營業時間', st.hours]);
+    if (st.note) rows.push(['交通', st.note]);
+    if (addr) rows.push(['地址', addr]);
+    return card(p.name + '店', 'Panda Pharmacy', st.photos, rows, mapUrl(st, p.name));
+  }).join('');
+  openPanel('info', '藥局資訊', team + `<div class="stores">${stores}</div>`);
+  $$('#pBody [data-sw]').forEach(b => b.onclick = () => {
+    const c = b.closest('.scard'); $('.hero img', c).src = b.dataset.sw;
+    $$('[data-sw]', c).forEach(x => x.classList.toggle('on', x === b));
+  });
+  $$('#pBody [data-zoom]').forEach(h => h.onclick = () => {
+    const d = document.createElement('div'); d.className = 'lbx';
+    d.innerHTML = `<img src="${esc($('img', h).src)}" alt="">`; d.onclick = () => d.remove();
+    document.body.appendChild(d);
+  });
 }
 $('#btnInfo').onclick = () => S.settings && openInfo();
 
